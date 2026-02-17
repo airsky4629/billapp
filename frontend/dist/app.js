@@ -431,7 +431,8 @@
     recordForm.querySelector('[name="note"]').value = '';
     recordForm.querySelector('[name="record_date"]').value = toLocalDateStr(new Date());
     if (categoryBtn) {
-      categoryBtn.textContent = '选择分类';
+      // 分类输入框本身就是触发器（readonly input）
+      if ('value' in categoryBtn) categoryBtn.value = '';
     }
     modal.classList.remove('hidden');
   }
@@ -454,9 +455,13 @@
   }
 
   function parseYMD(s) {
-    const m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const m = String(s || '').trim().match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
     if (!m) return null;
-    return { y: parseInt(m[1], 10), m: parseInt(m[2], 10), d: parseInt(m[3], 10) };
+    const y = parseInt(m[1], 10);
+    const mo = parseInt(m[2], 10);
+    const d = parseInt(m[3], 10);
+    if (!y || mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+    return { y, m: mo, d };
   }
 
   function daysInMonth(y, m) {
@@ -516,11 +521,14 @@
     for (let y = startY; y <= endY; y++) yearValues.push(y);
     monthValues = Array.from({ length: 12 }, (_, i) => i + 1);
 
-    setWheel(dateWheelYear, yearValues, datePickerY, (v) => `${v}年`);
-    setWheel(dateWheelMonth, monthValues, datePickerM, (v) => `${v}月`);
-    rebuildDayWheel();
-
     datePickerModal.classList.remove('hidden');
+
+    // 某些浏览器/移动端在 display:none -> block 后，scrollTop 需要下一帧再设置才会生效
+    requestAnimationFrame(() => {
+      setWheel(dateWheelYear, yearValues, datePickerY, (v) => `${v}年`);
+      setWheel(dateWheelMonth, monthValues, datePickerM, (v) => `${v}月`);
+      rebuildDayWheel();
+    });
   }
 
   function closeDatePicker() {
@@ -610,7 +618,8 @@
     if (categoryBtn) {
       // 移除可能存在的✓符号
       const cleanLabel = label.replace(/✓/g, '').trim();
-      categoryBtn.textContent = cleanLabel || '选择分类';
+      if ('value' in categoryBtn) categoryBtn.value = cleanLabel || '';
+      else categoryBtn.textContent = cleanLabel || '选择分类';
     }
     closeCategoryPicker();
   }

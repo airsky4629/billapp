@@ -96,16 +96,7 @@
       <form id="record-form">
         <input type="hidden" name="type" value="expense" />
         <input type="text" id="record-date" name="record_date" required readonly placeholder="日期" />
-        <input type="text" name="category" placeholder="分类（如：餐饮、交通）" list="categories" />
-        <datalist id="categories">
-          <option value="餐饮">
-          <option value="交通">
-          <option value="购物">
-          <option value="住房">
-          <option value="娱乐">
-          <option value="医疗">
-          <option value="其他">
-        </datalist>
+        <input type="text" id="category-btn" name="category" readonly placeholder="分类" />
         <input type="number" name="amount" step="0.01" min="0.01" placeholder="金额" required />
         <input type="text" name="note" placeholder="备注" />
         <div class="modal-actions">
@@ -129,6 +120,23 @@
         <button type="button" id="date-picker-cancel" class="btn">取消</button>
         <button type="button" id="date-picker-ok" class="btn primary">确定</button>
       </div>
+    </div>
+  </div>
+
+  <div id="category-picker-modal" class="picker-modal hidden">
+    <div class="picker-modal-backdrop"></div>
+    <div class="picker-modal-content">
+      <h3 class="picker-title">选择分类</h3>
+      <div class="picker-options">
+        <button type="button" class="picker-option" data-value="餐饮">餐饮</button>
+        <button type="button" class="picker-option" data-value="交通">交通</button>
+        <button type="button" class="picker-option" data-value="购物">购物</button>
+        <button type="button" class="picker-option" data-value="住房">住房</button>
+        <button type="button" class="picker-option" data-value="娱乐">娱乐</button>
+        <button type="button" class="picker-option" data-value="医疗">医疗</button>
+        <button type="button" class="picker-option" data-value="其他">其他</button>
+      </div>
+      <button type="button" id="category-picker-cancel" class="btn picker-cancel">取消</button>
     </div>
   </div>
 
