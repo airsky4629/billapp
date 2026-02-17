@@ -233,8 +233,15 @@
     for (var d = 1; d <= last.getDate(); d++) {
       var key = y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
       var cell = byDay[key] || { income: 0, expense: 0 };
-      var total = (cell.income - cell.expense).toFixed(0);
-      row.push('<div class="cal-day clickable" data-date="' + key + '"><span class="cal-n">' + d + '</span><span class="cal-t">' + total + '</span></div>');
+      var incText = cell.income ? ('+' + (cell.income || 0).toFixed(0)) : '';
+      var expText = cell.expense ? ('-' + (cell.expense || 0).toFixed(0)) : '';
+      row.push(
+        '<div class="cal-day clickable" data-date="' + key + '">' +
+          '<span class="cal-n">' + d + '</span>' +
+          '<span class="cal-inc">' + incText + '</span>' +
+          '<span class="cal-exp">' + expText + '</span>' +
+        '</div>'
+      );
       if (row.length === 7) { html += '<div class="cal-month-row">' + row.join('') + '</div>'; row = []; }
     }
     if (row.length) { while (row.length < 7) row.push('<div class="cal-day empty"></div>'); html += '<div class="cal-month-row">' + row.join('') + '</div>'; }
@@ -271,8 +278,9 @@
     var html = '<div class="cal-year">';
     for (var mo = 1; mo <= 12; mo++) {
       var g = byMonth[mo];
-      var balance = g.income - g.expense;
-      html += '<div class="cal-year-card clickable" data-month="' + mo + '"><div class="cal-year-title">' + mo + '月</div><div class="cal-year-row"><span>收</span><span class="amount income">' + (g.income || 0).toFixed(0) + '</span></div><div class="cal-year-row"><span>支</span><span class="amount expense">' + (g.expense || 0).toFixed(0) + '</span></div><div class="cal-year-row"><span>余</span><span class="amount balance">' + balance.toFixed(0) + '</span></div></div>';
+      var incTxt = g.income ? ('+' + (g.income || 0).toFixed(0)) : '';
+      var expTxt = g.expense ? ('-' + (g.expense || 0).toFixed(0)) : '';
+      html += '<div class="cal-year-card clickable" data-month="' + mo + '"><div class="cal-year-title">' + mo + '月</div><div class="cal-year-row"><span class="amount income">' + incTxt + '</span></div><div class="cal-year-row"><span class="amount expense">' + expTxt + '</span></div></div>';
     }
     html += '</div>';
     calendarWrap.innerHTML = html;

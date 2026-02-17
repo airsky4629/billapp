@@ -183,7 +183,7 @@ body {
 .cal-month-row.cal-month-head span { flex: 1; text-align: center; font-size: 0.75rem; color: rgba(255,255,255,0.6); }
 .cal-day {
   flex: 1;
-  min-height: 44px;
+  min-height: 58px;
   padding: 4px;
   background: rgba(255,255,255,0.05);
   border-radius: 6px;
@@ -193,6 +193,17 @@ body {
 .cal-day.empty { background: transparent; border-color: transparent; }
 .cal-day .cal-n { display: block; font-size: 0.85rem; color: rgba(255,255,255,0.9); }
 .cal-day .cal-t { display: block; font-size: 0.7rem; color: rgba(255,255,255,0.6); }
+.cal-day .cal-inc,
+.cal-day .cal-exp {
+  display: block;
+  font-size: 0.7rem;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cal-day .cal-inc { color: #38ef7d; }
+.cal-day .cal-exp { color: #f45c43; }
 .cal-day.clickable { cursor: pointer; transition: background 0.2s; }
 .cal-day.clickable:active { background: rgba(78, 205, 196, 0.2); }
 
