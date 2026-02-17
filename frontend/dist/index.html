@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>随手记 - 多用户记账</title>
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -37,12 +37,6 @@
         <span class="user">欢迎，<strong id="nav-username"></strong></span>
         <button type="button" id="logout-btn" class="btn small">退出</button>
       </header>
-      <section class="view-tabs">
-        <button type="button" class="view-tab active" data-view="list">列表</button>
-        <button type="button" class="view-tab" data-view="week">周视图</button>
-        <button type="button" class="view-tab" data-view="month">月视图</button>
-        <button type="button" class="view-tab" data-view="year">年视图</button>
-      </section>
       <section id="period-nav" class="period-nav hidden">
         <button type="button" id="period-prev" class="btn period-btn">‹</button>
         <span id="period-label" class="period-label"></span>
@@ -52,15 +46,8 @@
         <span class="filter-dates hidden" id="filter-dates">
           <input type="date" id="filter-start" />
           <input type="date" id="filter-end" />
-          <button type="button" id="filter-btn" class="btn small">查询</button>
         </span>
-        <button type="button" id="filter-type-btn" class="btn filter-type-btn">全部</button>
         <input type="hidden" id="filter-type" value="" />
-        <button type="button" id="filter-today" class="btn small hidden">当前</button>
-      </section>
-      <section class="actions">
-        <button type="button" id="add-income" class="btn add income">+ 记收入</button>
-        <button type="button" id="add-expense" class="btn add expense">+ 记支出</button>
       </section>
       <section class="summary">
         <div class="summary-item income">
@@ -81,6 +68,25 @@
         <ul id="record-list" class="record-list"></ul>
         <p id="list-empty" class="empty hidden">暂无记录</p>
       </section>
+      <section class="bottom-actions">
+        <div class="filter-buttons">
+          <button type="button" id="filter-type-btn" class="btn filter-type-btn">
+            <span id="filter-type-label">全部</span>
+          </button>
+          <button type="button" id="filter-btn" class="btn small hidden">查询</button>
+          <button type="button" id="filter-today" class="btn small hidden">当前</button>
+        </div>
+        <div class="record-buttons">
+          <button type="button" id="add-income" class="btn add income">+ 记收入</button>
+          <button type="button" id="add-expense" class="btn add expense">+ 记支出</button>
+        </div>
+      </section>
+      <section class="view-tabs">
+        <button type="button" class="view-tab active" data-view="list">列表</button>
+        <button type="button" class="view-tab" data-view="week">周视图</button>
+        <button type="button" class="view-tab" data-view="month">月视图</button>
+        <button type="button" class="view-tab" data-view="year">年视图</button>
+      </section>
     </div>
   </div>
 
@@ -90,8 +96,16 @@
       <form id="record-form">
         <input type="hidden" name="type" value="expense" />
         <input type="date" name="record_date" required placeholder="日期" />
-        <button type="button" id="category-btn" class="btn category-btn">选择分类</button>
-        <input type="hidden" name="category" value="" />
+        <input type="text" name="category" placeholder="分类（如：餐饮、交通）" list="categories" />
+        <datalist id="categories">
+          <option value="餐饮">
+          <option value="交通">
+          <option value="购物">
+          <option value="住房">
+          <option value="娱乐">
+          <option value="医疗">
+          <option value="其他">
+        </datalist>
         <input type="number" name="amount" step="0.01" min="0.01" placeholder="金额" required />
         <input type="text" name="note" placeholder="备注" />
         <div class="modal-actions">
@@ -105,38 +119,13 @@
   <div id="type-picker-modal" class="picker-modal hidden">
     <div class="picker-modal-backdrop"></div>
     <div class="picker-modal-content">
-      <div class="picker-header">
-        <h3 class="picker-title">选择类型</h3>
-      </div>
+      <h3 class="picker-title">选择类型</h3>
       <div class="picker-options">
         <button type="button" class="picker-option" data-value="">全部</button>
         <button type="button" class="picker-option" data-value="income">收入</button>
         <button type="button" class="picker-option" data-value="expense">支出</button>
       </div>
-      <div class="picker-actions">
-        <button type="button" id="picker-cancel" class="btn picker-cancel-btn">取消</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="category-picker-modal" class="picker-modal hidden">
-    <div class="picker-modal-backdrop"></div>
-    <div class="picker-modal-content">
-      <div class="picker-header">
-        <h3 class="picker-title">选择分类</h3>
-      </div>
-      <div class="picker-options">
-        <button type="button" class="picker-option" data-value="餐饮">餐饮</button>
-        <button type="button" class="picker-option" data-value="交通">交通</button>
-        <button type="button" class="picker-option" data-value="购物">购物</button>
-        <button type="button" class="picker-option" data-value="住房">住房</button>
-        <button type="button" class="picker-option" data-value="娱乐">娱乐</button>
-        <button type="button" class="picker-option" data-value="医疗">医疗</button>
-        <button type="button" class="picker-option" data-value="其他">其他</button>
-      </div>
-      <div class="picker-actions">
-        <button type="button" id="category-picker-cancel" class="btn picker-cancel-btn">取消</button>
-      </div>
+      <button type="button" id="picker-cancel" class="btn picker-cancel">取消</button>
     </div>
   </div>
 

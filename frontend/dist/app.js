@@ -457,10 +457,11 @@
 
   function selectType(value, label) {
     if (filterTypeInput) filterTypeInput.value = value;
-    if (filterTypeBtn) {
+    const filterTypeLabel = $('filter-type-label');
+    if (filterTypeLabel) {
       // 移除可能存在的✓符号
       const cleanLabel = label.replace('✓', '').trim();
-      filterTypeBtn.textContent = cleanLabel || '全部';
+      filterTypeLabel.textContent = cleanLabel || '全部';
     }
     closeTypePicker();
     loadRecords();
@@ -499,10 +500,11 @@
   function initMainPage() {
     navUsername.textContent = currentUsername || '用户';
     // 初始化类型选择按钮文本
-    if (filterTypeBtn && filterTypeInput) {
+    const filterTypeLabel = $('filter-type-label');
+    if (filterTypeLabel && filterTypeInput) {
       const value = filterTypeInput.value || '';
       const labels = { '': '全部', 'income': '收入', 'expense': '支出' };
-      filterTypeBtn.textContent = labels[value] || '全部';
+      filterTypeLabel.textContent = labels[value] || '全部';
     }
     setView('list');
   }
