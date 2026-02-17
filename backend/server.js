@@ -125,17 +125,33 @@ app.post('/api/records', authMiddleware, async (req, res) => {
   if (isNaN(num) || num <= 0) {
     return res.status(400).json({ code: 400, message: '金额须为正数' });
   }
-  const date = record_date || new Date().toISOString().slice(0, 10);
+  const rawDate = record_date || new Date().toISOString().slice(0, 10);
+  const date = String(rawDate).slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return res.status(400).json({ code: 400, message: '日期格式须为 YYYY-MM-DD' });
+  }
+  const userId = parseInt(req.userId, 10);
+  if (!userId || userId < 1) {
+    return res.status(401).json({ code: 401, message: '用户无效，请重新登录' });
+  }
+  const categoryStr = ((category || '').trim() || '其他').slice(0, 50);
+  const noteStr = (note || '').trim().slice(0, 255);
   try {
     const db = await getPool();
     const [r] = await db.execute(
       'INSERT INTO records (user_id, type, amount, category, note, record_date) VALUES (?, ?, ?, ?, ?, ?)',
-      [req.userId, type, num, (category || '').trim() || '其他', (note || '').trim(), date]
+      [userId, type, num, categoryStr, noteStr, date]
     );
     res.json({ code: 0, message: '添加成功', id: r.insertId });
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ code: 500, message: '添加失败' });
+    console.error('添加记录失败', e);
+    if (e.code === 'ER_NO_REFERENCED_ROW_2' || e.code === 'ER_BAD_FOREIGN_KEY') {
+      return res.status(401).json({ code: 401, message: '用户不存在，请重新登录' });
+    }
+    if (e.code === 'ER_TRUNCATED_WRONG_VALUE_FOR_FIELD' || e.code === 'ER_INVALID_CHARACTER_STRING') {
+      return res.status(400).json({ code: 400, message: '分类或备注含有非法字符，请修改后重试' });
+    }
+    res.status(500).json({ code: 500, message: '添加失败', detail: process.env.NODE_ENV === 'development' ? e.message : undefined });
   }
 });
 

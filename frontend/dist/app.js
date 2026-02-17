@@ -18,10 +18,19 @@
   const modalTitle = $('modal-title');
   const modalCancel = $('modal-cancel');
   const viewTitleEl = $('view-title');
-  const groupSummaryEl = $('group-summary');
+  const calendarWrap = $('calendar-wrap');
   const filterSection = $('filter-section');
+  const periodNav = $('period-nav');
+  const periodLabel = $('period-label');
+  const periodPrev = $('period-prev');
+  const periodNext = $('period-next');
+  const periodToday = $('period-today');
 
-  let currentView = 'list'; // 'list' | 'week' | 'month'
+  let currentView = 'list'; // 'list' | 'week' | 'month' | 'year' | 'day'
+  let calendarWeekStart = null; // Date 周一
+  let calendarMonth = null;   // { y, m }
+  let calendarYear = null;    // number
+  let calendarDay = null;     // string YYYY-MM-DD
 
   function showPage(showMain) {
     loginPage.classList.toggle('hidden', showMain);
@@ -57,124 +66,256 @@
     return s.slice(0, 10);
   }
 
-  // 本周一至周日（周一为一周开始）
-  function getWeekRange() {
+  function toLocalDateStr(d) {
+    const y = d.getFullYear();
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
+    return y + '-' + String(m).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+  }
+
+  function getThisWeekMonday() {
     const d = new Date();
     const day = d.getDay();
     const diff = day === 0 ? -6 : 1 - day;
-    const mon = new Date(d);
-    mon.setDate(d.getDate() + diff);
-    const sun = new Date(mon);
-    sun.setDate(mon.getDate() + 6);
-    return {
-      start: mon.toISOString().slice(0, 10),
-      end: sun.toISOString().slice(0, 10),
-    };
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate() + diff);
   }
 
-  // 本月 1 号至月末
-  function getMonthRange() {
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = d.getMonth();
-    const start = y + '-' + String(m + 1).padStart(2, '0') + '-01';
-    const last = new Date(y, m + 1, 0);
-    const end = y + '-' + String(last.getMonth() + 1).padStart(2, '0') + '-' + String(last.getDate()).padStart(2, '0');
-    return { start, end };
+  function getWeekRangeFromMonday(mon) {
+    const sun = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 6);
+    return { start: toLocalDateStr(mon), end: toLocalDateStr(sun) };
+  }
+
+  function getMonthRangeFromYM(y, m) {
+    const start = y + '-' + String(m).padStart(2, '0') + '-01';
+    const last = new Date(y, m, 0);
+    return { start, end: toLocalDateStr(last) };
+  }
+
+  function getYearRange(y) {
+    return { start: y + '-01-01', end: y + '-12-31' };
   }
 
   function formatDayLabel(dateStr) {
     const d = new Date(dateStr + 'T12:00:00');
-    const m = d.getMonth() + 1;
-    const day = d.getDate();
     const weekNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-    const w = weekNames[d.getDay()];
-    return m + '月' + day + '日 ' + w;
+    return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + weekNames[d.getDay()];
   }
 
   function setView(view) {
-    currentView = view;
-    document.querySelectorAll('.view-tab').forEach((t) => t.classList.toggle('active', t.dataset.view === view));
-    if (view === 'week') {
-      const r = getWeekRange();
-      $('filter-start').value = r.start;
-      $('filter-end').value = r.end;
-      viewTitleEl.textContent = '本周 ' + r.start + ' ~ ' + r.end;
-      viewTitleEl.classList.remove('hidden');
-      filterSection.classList.add('hidden');
-      groupSummaryEl.classList.remove('hidden');
-    } else if (view === 'month') {
-      const r = getMonthRange();
-      $('filter-start').value = r.start;
-      $('filter-end').value = r.end;
-      const d = new Date();
-      viewTitleEl.textContent = '本月 ' + d.getFullYear() + '年' + (d.getMonth() + 1) + '月';
-      viewTitleEl.classList.remove('hidden');
-      filterSection.classList.add('hidden');
-      groupSummaryEl.classList.remove('hidden');
-    } else {
-      viewTitleEl.classList.add('hidden');
-      groupSummaryEl.classList.add('hidden');
-      filterSection.classList.remove('hidden');
+    try {
+      currentView = view;
+      var tabs = document.querySelectorAll('.view-tab');
+      if (tabs.length) tabs.forEach(function(t) { t.classList.toggle('active', t.dataset.view === view); });
+      var filterStart = $('filter-start');
+      var filterEnd = $('filter-end');
+      if (view === 'list') {
+        if (viewTitleEl) viewTitleEl.classList.add('hidden');
+        if (calendarWrap) calendarWrap.classList.add('hidden');
+        if (periodNav) periodNav.classList.add('hidden');
+        if (filterSection) filterSection.classList.remove('hidden');
+        loadRecords();
+        return;
+      }
+      if (periodNav) periodNav.classList.remove('hidden');
+      if (filterSection) filterSection.classList.add('hidden');
+      if (calendarWrap) calendarWrap.classList.remove('hidden');
+      var r;
+      var now = new Date();
+      if (view === 'week') {
+        if (!calendarWeekStart) calendarWeekStart = getThisWeekMonday();
+        r = getWeekRangeFromMonday(calendarWeekStart);
+        if (filterStart) filterStart.value = r.start;
+        if (filterEnd) filterEnd.value = r.end;
+        if (viewTitleEl) { viewTitleEl.textContent = r.start + ' ~ ' + r.end; viewTitleEl.classList.remove('hidden'); }
+        if (periodLabel) periodLabel.textContent = r.start + ' 周';
+      } else if (view === 'month') {
+        if (!calendarMonth) calendarMonth = { y: now.getFullYear(), m: now.getMonth() + 1 };
+        r = getMonthRangeFromYM(calendarMonth.y, calendarMonth.m);
+        if (filterStart) filterStart.value = r.start;
+        if (filterEnd) filterEnd.value = r.end;
+        if (viewTitleEl) { viewTitleEl.textContent = calendarMonth.y + '年' + calendarMonth.m + '月'; viewTitleEl.classList.remove('hidden'); }
+        if (periodLabel) periodLabel.textContent = calendarMonth.y + '年' + calendarMonth.m + '月';
+      } else if (view === 'year') {
+        if (!calendarYear) calendarYear = now.getFullYear();
+        r = getYearRange(calendarYear);
+        if (filterStart) filterStart.value = r.start;
+        if (filterEnd) filterEnd.value = r.end;
+        if (viewTitleEl) { viewTitleEl.textContent = calendarYear + '年 全年'; viewTitleEl.classList.remove('hidden'); }
+        if (periodLabel) periodLabel.textContent = calendarYear + '年';
+      } else if (view === 'day') {
+        if (!calendarDay) calendarDay = toLocalDateStr(now);
+        if (filterStart) filterStart.value = calendarDay;
+        if (filterEnd) filterEnd.value = calendarDay;
+        var d = new Date(calendarDay + 'T12:00:00');
+        if (viewTitleEl) { viewTitleEl.textContent = d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日'; viewTitleEl.classList.remove('hidden'); }
+        if (periodLabel) periodLabel.textContent = calendarDay;
+      }
+      loadRecords();
+    } catch (e) {
+      console.error('setView error', e);
+      if (filterSection) filterSection.classList.remove('hidden');
+      if (calendarWrap) calendarWrap.classList.add('hidden');
+      if (periodNav) periodNav.classList.add('hidden');
     }
-    loadRecords();
   }
 
-  function renderGroupSummary(view, list) {
-    const arr = Array.isArray(list) ? list : [];
-    if (arr.length === 0 || (view !== 'week' && view !== 'month')) {
-      groupSummaryEl.innerHTML = '';
-      groupSummaryEl.classList.add('hidden');
-      return;
+  function renderWeekCalendar(list) {
+    if (!calendarWrap) return;
+    var arr = Array.isArray(list) ? list : [];
+    var byDay = {};
+    for (var i = 0; i < 7; i++) {
+      var d = new Date(calendarWeekStart.getFullYear(), calendarWeekStart.getMonth(), calendarWeekStart.getDate() + i);
+      var key = toLocalDateStr(d);
+      byDay[key] = { income: 0, expense: 0, dateStr: key };
     }
-    groupSummaryEl.classList.remove('hidden');
-    if (view === 'week') {
-      const byDay = {};
-      arr.forEach((r) => {
-        const d = formatDate(r.record_date || r.created_at);
-        if (!byDay[d]) byDay[d] = { income: 0, expense: 0, items: [] };
-        byDay[d].items.push(r);
-        if (r.type === 'income') byDay[d].income += Number(r.amount);
-        else byDay[d].expense += Number(r.amount);
+    arr.forEach(function(r) {
+      var key = formatDate(r.record_date || r.created_at);
+      if (byDay[key]) {
+        if (r.type === 'income') byDay[key].income += Number(r.amount);
+        else byDay[key].expense += Number(r.amount);
+      }
+    });
+    var weekNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    var html = '<div class="cal-week"><div class="cal-week-head">';
+    for (var i = 0; i < 7; i++) {
+      var d = new Date(calendarWeekStart.getFullYear(), calendarWeekStart.getMonth(), calendarWeekStart.getDate() + i);
+      var key = toLocalDateStr(d);
+      var cell = byDay[key] || { income: 0, expense: 0, dateStr: key };
+      html += '<div class="cal-week-cell clickable" data-date="' + key + '"><span class="cal-d">' + (d.getMonth() + 1) + '/' + d.getDate() + '</span><span class="cal-w">' + weekNames[i] + '</span><span class="cal-inc">+' + (cell.income || 0).toFixed(0) + '</span><span class="cal-exp">-' + (cell.expense || 0).toFixed(0) + '</span></div>';
+    }
+    html += '</div></div>';
+    calendarWrap.innerHTML = html;
+    calendarWrap.classList.remove('hidden');
+    calendarWrap.querySelectorAll('.cal-week-cell.clickable').forEach(function(el) {
+      el.addEventListener('click', function() {
+        var dateStr = el.getAttribute('data-date');
+        if (dateStr) {
+          calendarDay = dateStr;
+          setView('day');
+        }
       });
-      const days = Object.keys(byDay).sort();
-      groupSummaryEl.innerHTML = '<h4 class="group-summary-title">按日汇总</h4>' + days.map((d) => {
-        const g = byDay[d];
-        const balance = g.income - g.expense;
-        return '<div class="group-block"><div class="group-head">' + formatDayLabel(d) + '</div><div class="group-row"><span>收入</span><span class="amount income">+' + g.income.toFixed(2) + '</span></div><div class="group-row"><span>支出</span><span class="amount expense">-' + g.expense.toFixed(2) + '</span></div><div class="group-row"><span>结余</span><span class="amount balance">' + balance.toFixed(2) + '</span></div></div>';
-      }).join('');
-      return;
+    });
+  }
+
+  function renderMonthCalendar(list) {
+    if (!calendarWrap) return;
+    var arr = Array.isArray(list) ? list : [];
+    var y = calendarMonth.y;
+    var m = calendarMonth.m;
+    var first = new Date(y, m - 1, 1);
+    var last = new Date(y, m, 0);
+    var byDay = {};
+    for (var d = 1; d <= last.getDate(); d++) {
+      var key = y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+      byDay[key] = { income: 0, expense: 0 };
     }
-    if (view === 'month') {
-      const getWeekKey = (dateStr) => {
-        const d = new Date(dateStr + 'T12:00:00');
-        const day = d.getDay();
-        const diff = day === 0 ? -6 : 1 - day;
-        const mon = new Date(d);
-        mon.setDate(d.getDate() + diff);
-        const sun = new Date(mon);
-        sun.setDate(mon.getDate() + 6);
-        const m1 = mon.getMonth() + 1;
-        const d1 = mon.getDate();
-        const m2 = sun.getMonth() + 1;
-        const d2 = sun.getDate();
-        return { key: mon.toISOString().slice(0, 10), label: m1 + '/' + d1 + ' - ' + m2 + '/' + d2 };
-      };
-      const byWeek = {};
-      arr.forEach((r) => {
-        const d = formatDate(r.record_date || r.created_at);
-        const { key, label } = getWeekKey(d);
-        if (!byWeek[key]) byWeek[key] = { label, income: 0, expense: 0 };
-        if (r.type === 'income') byWeek[key].income += Number(r.amount);
-        else byWeek[key].expense += Number(r.amount);
+    arr.forEach(function(r) {
+      var key = formatDate(r.record_date || r.created_at);
+      if (byDay[key]) {
+        if (r.type === 'income') byDay[key].income += Number(r.amount);
+        else byDay[key].expense += Number(r.amount);
+      }
+    });
+    var startDow = first.getDay();
+    var startBlank = startDow === 0 ? 6 : startDow - 1;
+    var html = '<div class="cal-month"><div class="cal-month-row cal-month-head"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>';
+    var row = [];
+    for (var i = 0; i < startBlank; i++) row.push('<div class="cal-day empty"></div>');
+    for (var d = 1; d <= last.getDate(); d++) {
+      var key = y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+      var cell = byDay[key] || { income: 0, expense: 0 };
+      var total = (cell.income - cell.expense).toFixed(0);
+      row.push('<div class="cal-day clickable" data-date="' + key + '"><span class="cal-n">' + d + '</span><span class="cal-t">' + total + '</span></div>');
+      if (row.length === 7) { html += '<div class="cal-month-row">' + row.join('') + '</div>'; row = []; }
+    }
+    if (row.length) { while (row.length < 7) row.push('<div class="cal-day empty"></div>'); html += '<div class="cal-month-row">' + row.join('') + '</div>'; }
+    html += '</div>';
+    calendarWrap.innerHTML = html;
+    calendarWrap.classList.remove('hidden');
+    calendarWrap.querySelectorAll('.cal-day.clickable').forEach(function(el) {
+      el.addEventListener('click', function() {
+        var dateStr = el.getAttribute('data-date');
+        if (dateStr) {
+          var d = new Date(dateStr + 'T12:00:00');
+          var day = d.getDay();
+          var diff = day === 0 ? -6 : 1 - day;
+          calendarWeekStart = new Date(d.getFullYear(), d.getMonth(), d.getDate() + diff);
+          setView('week');
+        }
       });
-      const weeks = Object.keys(byWeek).sort();
-      groupSummaryEl.innerHTML = '<h4 class="group-summary-title">按周汇总</h4>' + weeks.map((k) => {
-        const g = byWeek[k];
-        const balance = g.income - g.expense;
-        return '<div class="group-block"><div class="group-head">' + escapeHtml(g.label) + '</div><div class="group-row"><span>收入</span><span class="amount income">+' + g.income.toFixed(2) + '</span></div><div class="group-row"><span>支出</span><span class="amount expense">-' + g.expense.toFixed(2) + '</span></div><div class="group-row"><span>结余</span><span class="amount balance">' + balance.toFixed(2) + '</span></div></div>';
-      }).join('');
+    });
+  }
+
+  function renderYearCalendar(list) {
+    if (!calendarWrap) return;
+    var arr = Array.isArray(list) ? list : [];
+    var byMonth = {};
+    for (var mo = 1; mo <= 12; mo++) byMonth[mo] = { income: 0, expense: 0 };
+    arr.forEach(function(r) {
+      var key = formatDate(r.record_date || r.created_at);
+      var mo = parseInt(key.slice(5, 7), 10);
+      if (byMonth[mo]) {
+        if (r.type === 'income') byMonth[mo].income += Number(r.amount);
+        else byMonth[mo].expense += Number(r.amount);
+      }
+    });
+    var html = '<div class="cal-year">';
+    for (var mo = 1; mo <= 12; mo++) {
+      var g = byMonth[mo];
+      var balance = g.income - g.expense;
+      html += '<div class="cal-year-card clickable" data-month="' + mo + '"><div class="cal-year-title">' + mo + '月</div><div class="cal-year-row"><span>收</span><span class="amount income">' + (g.income || 0).toFixed(0) + '</span></div><div class="cal-year-row"><span>支</span><span class="amount expense">' + (g.expense || 0).toFixed(0) + '</span></div><div class="cal-year-row"><span>余</span><span class="amount balance">' + balance.toFixed(0) + '</span></div></div>';
     }
+    html += '</div>';
+    calendarWrap.innerHTML = html;
+    calendarWrap.classList.remove('hidden');
+    calendarWrap.querySelectorAll('.cal-year-card.clickable').forEach(function(el) {
+      el.addEventListener('click', function() {
+        var month = parseInt(el.getAttribute('data-month'), 10);
+        if (month >= 1 && month <= 12) {
+          calendarMonth = { y: calendarYear, m: month };
+          setView('month');
+        }
+      });
+    });
+  }
+
+  function renderDayCalendar(list) {
+    if (!calendarWrap) return;
+    var arr = Array.isArray(list) ? list : [];
+    var dayRecords = arr.filter(function(r) {
+      var key = formatDate(r.record_date || r.created_at);
+      return key === calendarDay;
+    });
+    var income = 0, expense = 0;
+    dayRecords.forEach(function(r) {
+      if (r.type === 'income') income += Number(r.amount);
+      else expense += Number(r.amount);
+    });
+    var balance = income - expense;
+    var html = '<div class="cal-day-view">';
+    html += '<div class="cal-day-summary"><div class="cal-day-item"><span class="label">收入</span><span class="amount income">' + income.toFixed(2) + '</span></div>';
+    html += '<div class="cal-day-item"><span class="label">支出</span><span class="amount expense">' + expense.toFixed(2) + '</span></div>';
+    html += '<div class="cal-day-item"><span class="label">结余</span><span class="amount balance">' + balance.toFixed(2) + '</span></div></div>';
+    if (dayRecords.length === 0) {
+      html += '<p class="empty">该日暂无记录</p>';
+    } else {
+      html += '<ul class="cal-day-list">';
+      dayRecords.forEach(function(r) {
+        html += '<li class="cal-day-record"><span class="type ' + r.type + '">' + (r.type === 'income' ? '收入' : '支出') + '</span><span class="category">' + escapeHtml(r.category || '') + '</span><span class="amount ' + r.type + '">' + (r.type === 'income' ? '+' : '-') + Number(r.amount).toFixed(2) + '</span></li>';
+      });
+      html += '</ul>';
+    }
+    html += '</div>';
+    calendarWrap.innerHTML = html;
+    calendarWrap.classList.remove('hidden');
+  }
+
+  function renderCalendar(view, list) {
+    if (view === 'week' && calendarWeekStart) renderWeekCalendar(list);
+    else if (view === 'month' && calendarMonth) renderMonthCalendar(list);
+    else if (view === 'year' && calendarYear) renderYearCalendar(list);
+    else if (view === 'day' && calendarDay) renderDayCalendar(list);
+    else if (calendarWrap) { calendarWrap.innerHTML = ''; calendarWrap.classList.add('hidden'); }
   }
 
   function renderRecords(list) {
@@ -226,23 +367,31 @@
   }
 
   function loadRecords() {
-    const start = $('filter-start').value;
-    const end = $('filter-end').value;
-    const type = $('filter-type').value;
-    const params = new URLSearchParams({ page: 1, pageSize: 50 });
+    var filterStart = $('filter-start');
+    var filterEnd = $('filter-end');
+    var start = filterStart ? filterStart.value : '';
+    var end = filterEnd ? filterEnd.value : '';
+    var type = ($('filter-type') && $('filter-type').value) || '';
+    var pageSize = currentView === 'year' ? 500 : 100;
+    var params = new URLSearchParams({ page: 1, pageSize: pageSize });
     if (start) params.set('startDate', start);
     if (end) params.set('endDate', end);
     if (type) params.set('type', type);
     api('/api/records?' + params.toString())
-      .then((d) => {
-        const list = Array.isArray(d && d.list) ? d.list : [];
-        renderRecords(list);
-        if (currentView === 'week' || currentView === 'month') renderGroupSummary(currentView, list);
+      .then(function(d) {
+        var list = Array.isArray(d && d.list) ? d.list : [];
+        if (currentView === 'day') {
+          renderRecords(list);
+          renderCalendar(currentView, list);
+        } else {
+          renderRecords(list);
+          if (currentView === 'week' || currentView === 'month' || currentView === 'year') renderCalendar(currentView, list);
+        }
       })
-      .catch((e) => {
+      .catch(function(e) {
         console.error('列表加载失败', e);
         renderRecords([]);
-        if (currentView === 'week' || currentView === 'month') groupSummaryEl.classList.add('hidden');
+        if ((currentView === 'week' || currentView === 'month' || currentView === 'year' || currentView === 'day') && calendarWrap) calendarWrap.classList.add('hidden');
       });
     loadSummary();
   }
@@ -260,7 +409,7 @@
     recordForm.querySelector('[name="amount"]').value = '';
     recordForm.querySelector('[name="category"]').value = '';
     recordForm.querySelector('[name="note"]').value = '';
-    recordForm.querySelector('[name="record_date"]').value = new Date().toISOString().slice(0, 10);
+    recordForm.querySelector('[name="record_date"]').value = toLocalDateStr(new Date());
     modal.classList.remove('hidden');
   }
 
@@ -335,9 +484,89 @@
     });
   });
 
-  document.querySelectorAll('.view-tab').forEach((tab) => {
-    tab.addEventListener('click', () => setView(tab.dataset.view));
+  document.querySelectorAll('.view-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() { setView(tab.dataset.view); });
   });
+
+  if (periodPrev) periodPrev.addEventListener('click', function() {
+    try {
+      if (currentView === 'week' && calendarWeekStart) {
+        calendarWeekStart = new Date(calendarWeekStart.getFullYear(), calendarWeekStart.getMonth(), calendarWeekStart.getDate() - 7);
+        var r = getWeekRangeFromMonday(calendarWeekStart);
+        if ($('filter-start')) $('filter-start').value = r.start;
+        if ($('filter-end')) $('filter-end').value = r.end;
+        if (periodLabel) periodLabel.textContent = r.start + ' 周';
+        if (viewTitleEl) viewTitleEl.textContent = r.start + ' ~ ' + r.end;
+      } else if (currentView === 'month' && calendarMonth) {
+        if (calendarMonth.m === 1) { calendarMonth.m = 12; calendarMonth.y--; } else calendarMonth.m--;
+        var r = getMonthRangeFromYM(calendarMonth.y, calendarMonth.m);
+        if ($('filter-start')) $('filter-start').value = r.start;
+        if ($('filter-end')) $('filter-end').value = r.end;
+        if (periodLabel) periodLabel.textContent = calendarMonth.y + '年' + calendarMonth.m + '月';
+        if (viewTitleEl) viewTitleEl.textContent = calendarMonth.y + '年' + calendarMonth.m + '月';
+      } else if (currentView === 'year' && calendarYear) {
+        calendarYear--;
+        var r = getYearRange(calendarYear);
+        if ($('filter-start')) $('filter-start').value = r.start;
+        if ($('filter-end')) $('filter-end').value = r.end;
+        if (periodLabel) periodLabel.textContent = calendarYear + '年';
+        if (viewTitleEl) viewTitleEl.textContent = calendarYear + '年 全年';
+      } else if (currentView === 'day' && calendarDay) {
+        var d = new Date(calendarDay + 'T12:00:00');
+        d.setDate(d.getDate() - 1);
+        calendarDay = toLocalDateStr(d);
+        if ($('filter-start')) $('filter-start').value = calendarDay;
+        if ($('filter-end')) $('filter-end').value = calendarDay;
+        if (periodLabel) periodLabel.textContent = calendarDay;
+        if (viewTitleEl) viewTitleEl.textContent = d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
+      }
+      loadRecords();
+    } catch (e) { console.error(e); }
+  });
+  if (periodNext) periodNext.addEventListener('click', function() {
+    try {
+      if (currentView === 'week' && calendarWeekStart) {
+        calendarWeekStart = new Date(calendarWeekStart.getFullYear(), calendarWeekStart.getMonth(), calendarWeekStart.getDate() + 7);
+        var r = getWeekRangeFromMonday(calendarWeekStart);
+        if ($('filter-start')) $('filter-start').value = r.start;
+        if ($('filter-end')) $('filter-end').value = r.end;
+        if (periodLabel) periodLabel.textContent = r.start + ' 周';
+        if (viewTitleEl) viewTitleEl.textContent = r.start + ' ~ ' + r.end;
+      } else if (currentView === 'month' && calendarMonth) {
+        if (calendarMonth.m === 12) { calendarMonth.m = 1; calendarMonth.y++; } else calendarMonth.m++;
+        var r = getMonthRangeFromYM(calendarMonth.y, calendarMonth.m);
+        if ($('filter-start')) $('filter-start').value = r.start;
+        if ($('filter-end')) $('filter-end').value = r.end;
+        if (periodLabel) periodLabel.textContent = calendarMonth.y + '年' + calendarMonth.m + '月';
+        if (viewTitleEl) viewTitleEl.textContent = calendarMonth.y + '年' + calendarMonth.m + '月';
+      } else if (currentView === 'year' && calendarYear) {
+        calendarYear++;
+        var r = getYearRange(calendarYear);
+        if ($('filter-start')) $('filter-start').value = r.start;
+        if ($('filter-end')) $('filter-end').value = r.end;
+        if (periodLabel) periodLabel.textContent = calendarYear + '年';
+        if (viewTitleEl) viewTitleEl.textContent = calendarYear + '年 全年';
+      } else if (currentView === 'day' && calendarDay) {
+        var d = new Date(calendarDay + 'T12:00:00');
+        d.setDate(d.getDate() + 1);
+        calendarDay = toLocalDateStr(d);
+        if ($('filter-start')) $('filter-start').value = calendarDay;
+        if ($('filter-end')) $('filter-end').value = calendarDay;
+        if (periodLabel) periodLabel.textContent = calendarDay;
+        if (viewTitleEl) viewTitleEl.textContent = d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
+      }
+      loadRecords();
+    } catch (e) { console.error(e); }
+  });
+  if (periodToday) periodToday.addEventListener('click', function() {
+    var now = new Date();
+    if (currentView === 'week') calendarWeekStart = getThisWeekMonday();
+    else if (currentView === 'month') calendarMonth = { y: now.getFullYear(), m: now.getMonth() + 1 };
+    else if (currentView === 'year') calendarYear = now.getFullYear();
+    else if (currentView === 'day') calendarDay = toLocalDateStr(now);
+    setView(currentView);
+  });
+
   $('add-income').addEventListener('click', () => openModal('income'));
   $('add-expense').addEventListener('click', () => openModal('expense'));
   $('filter-btn').addEventListener('click', loadRecords);

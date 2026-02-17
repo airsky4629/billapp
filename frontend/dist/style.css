@@ -1,8 +1,4 @@
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-size: 16px;
@@ -13,23 +9,13 @@ body {
   padding: 20px;
 }
 #app { max-width: 480px; margin: 0 auto; }
+.hidden { display: none !important; }
 .page { min-height: 80vh; }
 .page.hidden { display: none !important; }
 
-.header {
-  text-align: center;
-  padding: 24px 0;
-  color: #e8e8e8;
-}
+.header { text-align: center; padding: 24px 0; color: #e8e8e8; }
 .header h1 { font-size: 1.8rem; margin-bottom: 4px; }
-.header.subtitle, .subtitle { font-size: 0.9rem; opacity: 0.9; }
-.header.bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  text-align: left;
-  padding: 12px 0;
-}
+.header.bar { display: flex; justify-content: space-between; align-items: center; text-align: left; padding: 12px 0; }
 .header.bar .user { font-size: 0.95rem; }
 
 .card {
@@ -39,11 +25,7 @@ body {
   margin-bottom: 16px;
   backdrop-filter: blur(8px);
 }
-.tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
+.tabs { display: flex; gap: 8px; margin-bottom: 16px; }
 .tab {
   flex: 1;
   padding: 10px;
@@ -54,11 +36,7 @@ body {
   cursor: pointer;
   font-size: 1rem;
 }
-.tab.active {
-  background: rgba(78, 205, 196, 0.3);
-  border-color: #4ecdc4;
-  color: #fff;
-}
+.tab.active { background: rgba(78, 205, 196, 0.3); border-color: #4ecdc4; color: #fff; }
 .form.hidden { display: none; }
 .form input {
   width: 100%;
@@ -82,11 +60,7 @@ body {
   transition: opacity 0.2s;
 }
 .btn:active { opacity: 0.85; }
-.btn.primary {
-  background: linear-gradient(135deg, #4ecdc4, #44a08d);
-  color: #fff;
-  font-weight: 600;
-}
+.btn.primary { background: linear-gradient(135deg, #4ecdc4, #44a08d); color: #fff; font-weight: 600; }
 .btn.small { padding: 8px 14px; font-size: 0.9rem; background: rgba(255,255,255,0.15); color: #e8e8e8; }
 .btn.add {
   flex: 1;
@@ -100,13 +74,7 @@ body {
 .btn.add.income { background: linear-gradient(135deg, #11998e, #38ef7d); }
 .btn.add.expense { background: linear-gradient(135deg, #eb3349, #f45c43); }
 
-.msg {
-  text-align: center;
-  padding: 8px;
-  font-size: 0.9rem;
-  color: #ff6b6b;
-  min-height: 24px;
-}
+.msg { text-align: center; padding: 8px; font-size: 0.9rem; color: #ff6b6b; min-height: 24px; }
 
 .summary {
   display: grid;
@@ -127,13 +95,141 @@ body {
 .summary-item.expense .amount { color: #f45c43; }
 .summary-item.balance .amount { color: #4ecdc4; }
 
-.filter {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
-  align-items: center;
+.view-tabs { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+.view-tab {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 6px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.06);
+  color: #e8e8e8;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
 }
+.view-tab.active { background: rgba(78, 205, 196, 0.35); border-color: #4ecdc4; color: #fff; }
+
+.period-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.period-nav.hidden { display: none !important; }
+.period-btn {
+  padding: 6px 12px;
+  font-size: 1rem;
+  background: rgba(255,255,255,0.1);
+  color: #e8e8e8;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.period-btn.current { background: rgba(78, 205, 196, 0.3); color: #4ecdc4; }
+.period-label { flex: 1; text-align: center; color: rgba(255,255,255,0.95); font-size: 0.95rem; min-width: 120px; }
+
+.view-title { font-size: 0.95rem; color: rgba(255,255,255,0.9); margin: -4px 0 10px 0; }
+.view-title.hidden { display: none !important; }
+
+.calendar-wrap {
+  margin-bottom: 16px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.calendar-wrap.hidden { display: none !important; }
+
+.cal-week { overflow-x: auto; }
+.cal-week-head { display: flex; gap: 6px; min-width: min-content; }
+.cal-week-cell {
+  min-width: 64px;
+  padding: 10px 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.cal-week-cell .cal-d { display: block; font-size: 0.85rem; color: #4ecdc4; margin-bottom: 2px; }
+.cal-week-cell .cal-w { display: block; font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-bottom: 6px; }
+.cal-week-cell .cal-inc { display: block; font-size: 0.8rem; color: #38ef7d; }
+.cal-week-cell .cal-exp { display: block; font-size: 0.8rem; color: #f45c43; }
+.cal-week-cell.clickable { cursor: pointer; transition: background 0.2s; }
+.cal-week-cell.clickable:active { background: rgba(78, 205, 196, 0.2); }
+
+.cal-month { }
+.cal-month-row { display: flex; gap: 4px; margin-bottom: 4px; }
+.cal-month-row.cal-month-head { margin-bottom: 8px; }
+.cal-month-row.cal-month-head span { flex: 1; text-align: center; font-size: 0.75rem; color: rgba(255,255,255,0.6); }
+.cal-day {
+  flex: 1;
+  min-height: 44px;
+  padding: 4px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 6px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.cal-day.empty { background: transparent; border-color: transparent; }
+.cal-day .cal-n { display: block; font-size: 0.85rem; color: rgba(255,255,255,0.9); }
+.cal-day .cal-t { display: block; font-size: 0.7rem; color: rgba(255,255,255,0.6); }
+.cal-day.clickable { cursor: pointer; transition: background 0.2s; }
+.cal-day.clickable:active { background: rgba(78, 205, 196, 0.2); }
+
+.cal-year { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.cal-year-card {
+  background: rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.cal-year-title { font-size: 0.9rem; color: #4ecdc4; margin-bottom: 6px; text-align: center; }
+.cal-year-row { display: flex; justify-content: space-between; font-size: 0.8rem; color: rgba(255,255,255,0.85); margin-top: 2px; }
+.cal-year-row .amount.income { color: #38ef7d; }
+.cal-year-row .amount.expense { color: #f45c43; }
+.cal-year-row .amount.balance { color: #4ecdc4; }
+.cal-year-card.clickable { cursor: pointer; transition: background 0.2s, transform 0.1s; }
+.cal-year-card.clickable:active { background: rgba(78, 205, 196, 0.2); transform: scale(0.98); }
+
+.cal-day-view { }
+.cal-day-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.cal-day-item {
+  background: rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+.cal-day-item .label { display: block; font-size: 0.8rem; color: rgba(255,255,255,0.7); margin-bottom: 4px; }
+.cal-day-item .amount { font-size: 1.1rem; font-weight: 700; }
+.cal-day-item .amount.income { color: #38ef7d; }
+.cal-day-item .amount.expense { color: #f45c43; }
+.cal-day-item .amount.balance { color: #4ecdc4; }
+.cal-day-list { list-style: none; }
+.cal-day-record {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 8px;
+}
+.cal-day-record .type { font-size: 0.85rem; margin-right: 8px; }
+.cal-day-record .type.income { color: #38ef7d; }
+.cal-day-record .type.expense { color: #f45c43; }
+.cal-day-record .category { flex: 1; color: rgba(255,255,255,0.85); font-size: 0.9rem; }
+.cal-day-record .amount { font-weight: 600; }
+.cal-day-record .amount.income { color: #38ef7d; }
+.cal-day-record .amount.expense { color: #f45c43; }
+
+.filter { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
+.filter.hidden { display: none !important; }
 .filter input[type="date"], .filter select {
   padding: 8px 10px;
   border-radius: 8px;
@@ -143,69 +239,6 @@ body {
   font-size: 0.9rem;
 }
 .filter select { min-width: 80px; }
-
-.view-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-.view-tab {
-  flex: 1;
-  padding: 10px;
-  border: 1px solid rgba(255,255,255,0.2);
-  background: rgba(255,255,255,0.06);
-  color: #e8e8e8;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.95rem;
-}
-.view-tab.active {
-  background: rgba(78, 205, 196, 0.35);
-  border-color: #4ecdc4;
-  color: #fff;
-}
-.view-title {
-  font-size: 0.95rem;
-  color: rgba(255,255,255,0.9);
-  margin: -8px 0 12px 0;
-  padding: 6px 0;
-}
-.view-title.hidden { display: none !important; }
-.group-summary {
-  margin-bottom: 16px;
-}
-.group-summary.hidden { display: none !important; }
-.group-summary-title {
-  font-size: 0.9rem;
-  color: rgba(255,255,255,0.85);
-  margin-bottom: 10px;
-  font-weight: 600;
-}
-.group-block {
-  background: rgba(255,255,255,0.06);
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin-bottom: 10px;
-  border: 1px solid rgba(255,255,255,0.08);
-}
-.group-head {
-  font-size: 0.9rem;
-  color: #4ecdc4;
-  margin-bottom: 8px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-.group-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.85rem;
-  color: rgba(255,255,255,0.85);
-  margin-top: 4px;
-}
-.group-row .amount.income { color: #38ef7d; }
-.group-row .amount.expense { color: #f45c43; }
-.group-row .amount.balance { color: #4ecdc4; }
 
 .actions { display: flex; gap: 10px; margin-bottom: 16px; }
 

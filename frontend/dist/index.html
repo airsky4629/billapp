@@ -41,6 +41,13 @@
         <button type="button" class="view-tab active" data-view="list">列表</button>
         <button type="button" class="view-tab" data-view="week">周视图</button>
         <button type="button" class="view-tab" data-view="month">月视图</button>
+        <button type="button" class="view-tab" data-view="year">年视图</button>
+      </section>
+      <section id="period-nav" class="period-nav hidden">
+        <button type="button" id="period-prev" class="btn period-btn">‹</button>
+        <span id="period-label" class="period-label"></span>
+        <button type="button" id="period-next" class="btn period-btn">›</button>
+        <button type="button" id="period-today" class="btn period-btn current">当前</button>
       </section>
       <p id="view-title" class="view-title hidden"></p>
       <section class="summary">
@@ -57,7 +64,7 @@
           <span id="sum-balance" class="amount">0.00</span>
         </div>
       </section>
-      <section id="group-summary" class="group-summary hidden"></section>
+      <section id="calendar-wrap" class="calendar-wrap hidden"></section>
       <section class="filter" id="filter-section">
         <input type="date" id="filter-start" />
         <input type="date" id="filter-end" />
