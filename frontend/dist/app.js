@@ -28,6 +28,13 @@
   const filterTypeInput = $('filter-type');
   const typePickerModal = $('type-picker-modal');
   const pickerCancel = $('picker-cancel');
+  const recordDateInput = $('record-date');
+  const datePickerModal = $('date-picker-modal');
+  const datePickerCancel = $('date-picker-cancel');
+  const datePickerOk = $('date-picker-ok');
+  const dateWheelYear = $('date-wheel-year');
+  const dateWheelMonth = $('date-wheel-month');
+  const dateWheelDay = $('date-wheel-day');
   const categoryBtn = $('category-btn');
   const categoryPickerModal = $('category-picker-modal');
   const categoryPickerCancel = $('category-picker-cancel');
@@ -433,6 +440,121 @@
     modal.classList.add('hidden');
   }
 
+  // 日期选择滚轮（年 / 月 / 日）
+  const DATE_WHEEL_ITEM_HEIGHT = 44;
+  let datePickerY = null;
+  let datePickerM = null;
+  let datePickerD = null;
+  let yearValues = [];
+  let monthValues = [];
+  let dayValues = [];
+
+  function pad2(n) {
+    return String(n).padStart(2, '0');
+  }
+
+  function parseYMD(s) {
+    const m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return null;
+    return { y: parseInt(m[1], 10), m: parseInt(m[2], 10), d: parseInt(m[3], 10) };
+  }
+
+  function daysInMonth(y, m) {
+    return new Date(y, m, 0).getDate(); // m: 1-12
+  }
+
+  function setWheel(el, values, selectedValue, format) {
+    if (!el) return 0;
+    el.innerHTML = values.map(v => (
+      `<div class="date-wheel-item" data-value="${v}">${format ? format(v) : v}</div>`
+    )).join('');
+    const idx = Math.max(0, values.indexOf(selectedValue));
+    el.scrollTop = idx * DATE_WHEEL_ITEM_HEIGHT;
+    updateWheelSelected(el, idx);
+    return idx;
+  }
+
+  function updateWheelSelected(el, idx) {
+    if (!el) return;
+    const items = el.querySelectorAll('.date-wheel-item');
+    items.forEach((it, i) => it.classList.toggle('selected', i === idx));
+  }
+
+  function snapWheel(el, values) {
+    if (!el || !values || !values.length) return null;
+    const maxIdx = values.length - 1;
+    let idx = Math.round(el.scrollTop / DATE_WHEEL_ITEM_HEIGHT);
+    if (idx < 0) idx = 0;
+    if (idx > maxIdx) idx = maxIdx;
+    el.scrollTo({ top: idx * DATE_WHEEL_ITEM_HEIGHT, behavior: 'smooth' });
+    updateWheelSelected(el, idx);
+    return values[idx];
+  }
+
+  function rebuildDayWheel() {
+    if (datePickerY == null || datePickerM == null) return;
+    const dim = daysInMonth(datePickerY, datePickerM);
+    dayValues = Array.from({ length: dim }, (_, i) => i + 1);
+    if (datePickerD == null) datePickerD = 1;
+    if (datePickerD > dim) datePickerD = dim;
+    setWheel(dateWheelDay, dayValues, datePickerD, (v) => `${v}日`);
+  }
+
+  function openDatePicker() {
+    if (!datePickerModal || !recordDateInput) return;
+    const parsed = parseYMD(recordDateInput.value) || parseYMD(toLocalDateStr(new Date()));
+    const now = new Date();
+    datePickerY = parsed ? parsed.y : now.getFullYear();
+    datePickerM = parsed ? parsed.m : (now.getMonth() + 1);
+    datePickerD = parsed ? parsed.d : now.getDate();
+
+    const baseStart = now.getFullYear() - 10;
+    const baseEnd = now.getFullYear() + 10;
+    const startY = Math.min(baseStart, datePickerY);
+    const endY = Math.max(baseEnd, datePickerY);
+    yearValues = [];
+    for (let y = startY; y <= endY; y++) yearValues.push(y);
+    monthValues = Array.from({ length: 12 }, (_, i) => i + 1);
+
+    setWheel(dateWheelYear, yearValues, datePickerY, (v) => `${v}年`);
+    setWheel(dateWheelMonth, monthValues, datePickerM, (v) => `${v}月`);
+    rebuildDayWheel();
+
+    datePickerModal.classList.remove('hidden');
+  }
+
+  function closeDatePicker() {
+    if (datePickerModal) datePickerModal.classList.add('hidden');
+  }
+
+  function applyDatePicker() {
+    if (!recordDateInput) return;
+    if (datePickerY == null || datePickerM == null || datePickerD == null) return;
+    recordDateInput.value = `${datePickerY}-${pad2(datePickerM)}-${pad2(datePickerD)}`;
+    closeDatePicker();
+  }
+
+  function bindWheel(el, getValues, onValue) {
+    if (!el) return;
+    let t = null;
+    el.addEventListener('scroll', () => {
+      if (t) clearTimeout(t);
+      t = setTimeout(() => {
+        const values = getValues();
+        const v = snapWheel(el, values);
+        if (v != null) onValue(v);
+      }, 80);
+    });
+    el.addEventListener('click', (e) => {
+      const item = e.target && e.target.closest && e.target.closest('.date-wheel-item');
+      if (!item) return;
+      const values = getValues();
+      const v = parseInt(item.getAttribute('data-value'), 10);
+      const idx = values.indexOf(v);
+      if (idx >= 0) el.scrollTo({ top: idx * DATE_WHEEL_ITEM_HEIGHT, behavior: 'smooth' });
+    });
+  }
+
   function openTypePicker() {
     if (!typePickerModal) return;
     const currentValue = (filterTypeInput && filterTypeInput.value) || '';
@@ -633,6 +755,32 @@
   $('add-expense').addEventListener('click', () => openModal('expense'));
   $('filter-btn').addEventListener('click', loadRecords);
   
+  // 记账日期滚轮弹窗
+  if (recordDateInput) {
+    recordDateInput.addEventListener('click', openDatePicker);
+  }
+  if (datePickerCancel) {
+    datePickerCancel.addEventListener('click', closeDatePicker);
+  }
+  if (datePickerOk) {
+    datePickerOk.addEventListener('click', applyDatePicker);
+  }
+  if (datePickerModal) {
+    const backdrop = datePickerModal.querySelector('.picker-modal-backdrop');
+    if (backdrop) backdrop.addEventListener('click', closeDatePicker);
+  }
+  bindWheel(dateWheelYear, () => yearValues, (v) => {
+    datePickerY = v;
+    rebuildDayWheel();
+  });
+  bindWheel(dateWheelMonth, () => monthValues, (v) => {
+    datePickerM = v;
+    rebuildDayWheel();
+  });
+  bindWheel(dateWheelDay, () => dayValues, (v) => {
+    datePickerD = v;
+  });
+
   // 类型选择弹窗
   if (filterTypeBtn) {
     filterTypeBtn.addEventListener('click', openTypePicker);

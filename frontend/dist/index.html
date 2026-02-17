@@ -95,7 +95,7 @@
       <h3 id="modal-title">记一笔</h3>
       <form id="record-form">
         <input type="hidden" name="type" value="expense" />
-        <input type="date" name="record_date" required placeholder="日期" />
+        <input type="text" id="record-date" name="record_date" required readonly placeholder="日期" />
         <input type="text" name="category" placeholder="分类（如：餐饮、交通）" list="categories" />
         <datalist id="categories">
           <option value="餐饮">
@@ -113,6 +113,22 @@
           <button type="submit" class="btn primary">保存</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <div id="date-picker-modal" class="picker-modal hidden">
+    <div class="picker-modal-backdrop"></div>
+    <div class="picker-modal-content date-picker">
+      <h3 class="picker-title">选择日期</h3>
+      <div class="date-wheel-row">
+        <div class="date-wheel" id="date-wheel-year" aria-label="年"></div>
+        <div class="date-wheel" id="date-wheel-month" aria-label="月"></div>
+        <div class="date-wheel" id="date-wheel-day" aria-label="日"></div>
+      </div>
+      <div class="picker-actions">
+        <button type="button" id="date-picker-cancel" class="btn">取消</button>
+        <button type="button" id="date-picker-ok" class="btn primary">确定</button>
+      </div>
     </div>
   </div>
 

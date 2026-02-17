@@ -398,6 +398,12 @@ body {
 .record-modal-content input::placeholder {
   color: rgba(255,255,255,0.5);
 }
+.record-modal-content input[readonly] {
+  cursor: pointer;
+}
+.record-modal-content input[readonly]:active {
+  transform: scale(0.99);
+}
 .modal-actions {
   display: flex;
   gap: 10px;
@@ -437,6 +443,9 @@ body {
   box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
   animation: slideUp 0.3s ease-out;
 }
+.picker-modal-content.date-picker {
+  max-width: 480px;
+}
 @keyframes slideUp {
   from {
     transform: translateY(100%);
@@ -458,6 +467,60 @@ body {
   flex-direction: column;
   gap: 12px;
   margin-bottom: 16px;
+}
+.picker-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+.picker-actions .btn {
+  flex: 1;
+}
+
+.date-wheel-row {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  position: relative;
+  margin-bottom: 16px;
+}
+.date-wheel-row::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-22px);
+  height: 44px;
+  border-top: 1px solid rgba(255,255,255,0.12);
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.03);
+  border-radius: 12px;
+  pointer-events: none;
+}
+.date-wheel {
+  flex: 1;
+  height: 220px; /* 5 * 44px */
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  padding: 88px 0; /* 2 * 44px: 让首/尾项可居中 */
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.date-wheel::-webkit-scrollbar { display: none; }
+.date-wheel-item {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  scroll-snap-align: center;
+  font-size: 1rem;
+  color: rgba(255,255,255,0.65);
+  user-select: none;
+}
+.date-wheel-item.selected {
+  color: #fff;
+  font-weight: 700;
 }
 .picker-option {
   padding: 16px;
