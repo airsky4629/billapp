@@ -31,9 +31,19 @@ if [ -n "$RUNNING" ]; then
   read -p "是否先关闭当前进程再启动？(y/N): " ANSWER
   case "${ANSWER:-n}" in
     y|Y|yes|YES)
-      echo ">>> 正在关闭当前服务..."
-      $COMPOSE_CMD down
-      echo ">>> 已关闭，开始重新构建并启动..."
+      read -p "是否同时重启 MySQL？(y/N，选 N 则仅重启后端与前端，保留 MySQL 及数据): " RESTART_MYSQL
+      case "${RESTART_MYSQL:-n}" in
+        y|Y|yes|YES)
+          echo ">>> 正在关闭所有服务（含 MySQL）..."
+          $COMPOSE_CMD down
+          echo ">>> 已关闭，开始重新构建并启动..."
+          ;;
+        *)
+          echo ">>> 正在仅关闭后端与前端（保留 MySQL）..."
+          $COMPOSE_CMD stop backend frontend 2>/dev/null || true
+          echo ">>> 已关闭应用服务，开始重新构建并启动..."
+          ;;
+      esac
       ;;
     *)
       echo "已取消启动。如需重启请先执行: $COMPOSE_CMD down"
@@ -49,7 +59,7 @@ echo ""
 echo ">>> 等待 MySQL 就绪..."
 sleep 5
 for i in 1 2 3 4 5 6 7 8 9 10; do
-  if docker exec account-mysql mysqladmin ping -h localhost -u root -prootpass &>/dev/null; then
+  if docker exec billapp-mysql mysqladmin ping -h localhost -u root -prootpass &>/dev/null; then
     echo "MySQL 已就绪"
     break
   fi

@@ -17,6 +17,11 @@
   const recordForm = $('record-form');
   const modalTitle = $('modal-title');
   const modalCancel = $('modal-cancel');
+  const viewTitleEl = $('view-title');
+  const groupSummaryEl = $('group-summary');
+  const filterSection = $('filter-section');
+
+  let currentView = 'list'; // 'list' | 'week' | 'month'
 
   function showPage(showMain) {
     loginPage.classList.toggle('hidden', showMain);
@@ -50,6 +55,126 @@
     const s = String(v);
     if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
     return s.slice(0, 10);
+  }
+
+  // 本周一至周日（周一为一周开始）
+  function getWeekRange() {
+    const d = new Date();
+    const day = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    const mon = new Date(d);
+    mon.setDate(d.getDate() + diff);
+    const sun = new Date(mon);
+    sun.setDate(mon.getDate() + 6);
+    return {
+      start: mon.toISOString().slice(0, 10),
+      end: sun.toISOString().slice(0, 10),
+    };
+  }
+
+  // 本月 1 号至月末
+  function getMonthRange() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = d.getMonth();
+    const start = y + '-' + String(m + 1).padStart(2, '0') + '-01';
+    const last = new Date(y, m + 1, 0);
+    const end = y + '-' + String(last.getMonth() + 1).padStart(2, '0') + '-' + String(last.getDate()).padStart(2, '0');
+    return { start, end };
+  }
+
+  function formatDayLabel(dateStr) {
+    const d = new Date(dateStr + 'T12:00:00');
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
+    const weekNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    const w = weekNames[d.getDay()];
+    return m + '月' + day + '日 ' + w;
+  }
+
+  function setView(view) {
+    currentView = view;
+    document.querySelectorAll('.view-tab').forEach((t) => t.classList.toggle('active', t.dataset.view === view));
+    if (view === 'week') {
+      const r = getWeekRange();
+      $('filter-start').value = r.start;
+      $('filter-end').value = r.end;
+      viewTitleEl.textContent = '本周 ' + r.start + ' ~ ' + r.end;
+      viewTitleEl.classList.remove('hidden');
+      filterSection.classList.add('hidden');
+      groupSummaryEl.classList.remove('hidden');
+    } else if (view === 'month') {
+      const r = getMonthRange();
+      $('filter-start').value = r.start;
+      $('filter-end').value = r.end;
+      const d = new Date();
+      viewTitleEl.textContent = '本月 ' + d.getFullYear() + '年' + (d.getMonth() + 1) + '月';
+      viewTitleEl.classList.remove('hidden');
+      filterSection.classList.add('hidden');
+      groupSummaryEl.classList.remove('hidden');
+    } else {
+      viewTitleEl.classList.add('hidden');
+      groupSummaryEl.classList.add('hidden');
+      filterSection.classList.remove('hidden');
+    }
+    loadRecords();
+  }
+
+  function renderGroupSummary(view, list) {
+    const arr = Array.isArray(list) ? list : [];
+    if (arr.length === 0 || (view !== 'week' && view !== 'month')) {
+      groupSummaryEl.innerHTML = '';
+      groupSummaryEl.classList.add('hidden');
+      return;
+    }
+    groupSummaryEl.classList.remove('hidden');
+    if (view === 'week') {
+      const byDay = {};
+      arr.forEach((r) => {
+        const d = formatDate(r.record_date || r.created_at);
+        if (!byDay[d]) byDay[d] = { income: 0, expense: 0, items: [] };
+        byDay[d].items.push(r);
+        if (r.type === 'income') byDay[d].income += Number(r.amount);
+        else byDay[d].expense += Number(r.amount);
+      });
+      const days = Object.keys(byDay).sort();
+      groupSummaryEl.innerHTML = '<h4 class="group-summary-title">按日汇总</h4>' + days.map((d) => {
+        const g = byDay[d];
+        const balance = g.income - g.expense;
+        return '<div class="group-block"><div class="group-head">' + formatDayLabel(d) + '</div><div class="group-row"><span>收入</span><span class="amount income">+' + g.income.toFixed(2) + '</span></div><div class="group-row"><span>支出</span><span class="amount expense">-' + g.expense.toFixed(2) + '</span></div><div class="group-row"><span>结余</span><span class="amount balance">' + balance.toFixed(2) + '</span></div></div>';
+      }).join('');
+      return;
+    }
+    if (view === 'month') {
+      const getWeekKey = (dateStr) => {
+        const d = new Date(dateStr + 'T12:00:00');
+        const day = d.getDay();
+        const diff = day === 0 ? -6 : 1 - day;
+        const mon = new Date(d);
+        mon.setDate(d.getDate() + diff);
+        const sun = new Date(mon);
+        sun.setDate(mon.getDate() + 6);
+        const m1 = mon.getMonth() + 1;
+        const d1 = mon.getDate();
+        const m2 = sun.getMonth() + 1;
+        const d2 = sun.getDate();
+        return { key: mon.toISOString().slice(0, 10), label: m1 + '/' + d1 + ' - ' + m2 + '/' + d2 };
+      };
+      const byWeek = {};
+      arr.forEach((r) => {
+        const d = formatDate(r.record_date || r.created_at);
+        const { key, label } = getWeekKey(d);
+        if (!byWeek[key]) byWeek[key] = { label, income: 0, expense: 0 };
+        if (r.type === 'income') byWeek[key].income += Number(r.amount);
+        else byWeek[key].expense += Number(r.amount);
+      });
+      const weeks = Object.keys(byWeek).sort();
+      groupSummaryEl.innerHTML = '<h4 class="group-summary-title">按周汇总</h4>' + weeks.map((k) => {
+        const g = byWeek[k];
+        const balance = g.income - g.expense;
+        return '<div class="group-block"><div class="group-head">' + escapeHtml(g.label) + '</div><div class="group-row"><span>收入</span><span class="amount income">+' + g.income.toFixed(2) + '</span></div><div class="group-row"><span>支出</span><span class="amount expense">-' + g.expense.toFixed(2) + '</span></div><div class="group-row"><span>结余</span><span class="amount balance">' + balance.toFixed(2) + '</span></div></div>';
+      }).join('');
+    }
   }
 
   function renderRecords(list) {
@@ -112,10 +237,12 @@
       .then((d) => {
         const list = Array.isArray(d && d.list) ? d.list : [];
         renderRecords(list);
+        if (currentView === 'week' || currentView === 'month') renderGroupSummary(currentView, list);
       })
       .catch((e) => {
         console.error('列表加载失败', e);
         renderRecords([]);
+        if (currentView === 'week' || currentView === 'month') groupSummaryEl.classList.add('hidden');
       });
     loadSummary();
   }
@@ -208,6 +335,9 @@
     });
   });
 
+  document.querySelectorAll('.view-tab').forEach((tab) => {
+    tab.addEventListener('click', () => setView(tab.dataset.view));
+  });
   $('add-income').addEventListener('click', () => openModal('income'));
   $('add-expense').addEventListener('click', () => openModal('expense'));
   $('filter-btn').addEventListener('click', loadRecords);

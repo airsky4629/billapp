@@ -144,6 +144,69 @@ body {
 }
 .filter select { min-width: 80px; }
 
+.view-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.view-tab {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.06);
+  color: #e8e8e8;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+.view-tab.active {
+  background: rgba(78, 205, 196, 0.35);
+  border-color: #4ecdc4;
+  color: #fff;
+}
+.view-title {
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.9);
+  margin: -8px 0 12px 0;
+  padding: 6px 0;
+}
+.view-title.hidden { display: none !important; }
+.group-summary {
+  margin-bottom: 16px;
+}
+.group-summary.hidden { display: none !important; }
+.group-summary-title {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.85);
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+.group-block {
+  background: rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.group-head {
+  font-size: 0.9rem;
+  color: #4ecdc4;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.group-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.85);
+  margin-top: 4px;
+}
+.group-row .amount.income { color: #38ef7d; }
+.group-row .amount.expense { color: #f45c43; }
+.group-row .amount.balance { color: #4ecdc4; }
+
 .actions { display: flex; gap: 10px; margin-bottom: 16px; }
 
 .record-list { list-style: none; }

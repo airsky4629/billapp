@@ -37,6 +37,12 @@
         <span class="user">欢迎，<strong id="nav-username"></strong></span>
         <button type="button" id="logout-btn" class="btn small">退出</button>
       </header>
+      <section class="view-tabs">
+        <button type="button" class="view-tab active" data-view="list">列表</button>
+        <button type="button" class="view-tab" data-view="week">周视图</button>
+        <button type="button" class="view-tab" data-view="month">月视图</button>
+      </section>
+      <p id="view-title" class="view-title hidden"></p>
       <section class="summary">
         <div class="summary-item income">
           <span class="label">收入</span>
@@ -51,7 +57,8 @@
           <span id="sum-balance" class="amount">0.00</span>
         </div>
       </section>
-      <section class="filter">
+      <section id="group-summary" class="group-summary hidden"></section>
+      <section class="filter" id="filter-section">
         <input type="date" id="filter-start" />
         <input type="date" id="filter-end" />
         <select id="filter-type">
