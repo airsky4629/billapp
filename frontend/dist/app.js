@@ -24,6 +24,13 @@
   const periodLabel = $('period-label');
   const periodPrev = $('period-prev');
   const periodNext = $('period-next');
+  const filterTypeBtn = $('filter-type-btn');
+  const filterTypeInput = $('filter-type');
+  const typePickerModal = $('type-picker-modal');
+  const pickerCancel = $('picker-cancel');
+  const categoryBtn = $('category-btn');
+  const categoryPickerModal = $('category-picker-modal');
+  const categoryPickerCancel = $('category-picker-cancel');
 
   let currentView = 'list'; // 'list' | 'week' | 'month' | 'year' | 'day'
   let calendarWeekStart = null; // Date 周一
@@ -379,7 +386,7 @@
     var filterEnd = $('filter-end');
     var start = filterStart ? filterStart.value : '';
     var end = filterEnd ? filterEnd.value : '';
-    var type = ($('filter-type') && $('filter-type').value) || '';
+    var type = (filterTypeInput && filterTypeInput.value) || '';
     var pageSize = currentView === 'year' ? 500 : 100;
     var params = new URLSearchParams({ page: 1, pageSize: pageSize });
     if (currentView !== 'list') {
@@ -420,6 +427,9 @@
     recordForm.querySelector('[name="category"]').value = '';
     recordForm.querySelector('[name="note"]').value = '';
     recordForm.querySelector('[name="record_date"]').value = toLocalDateStr(new Date());
+    if (categoryBtn) {
+      categoryBtn.textContent = '选择分类';
+    }
     modal.classList.remove('hidden');
   }
 
@@ -427,8 +437,73 @@
     modal.classList.add('hidden');
   }
 
+  function openTypePicker() {
+    if (!typePickerModal) return;
+    const currentValue = (filterTypeInput && filterTypeInput.value) || '';
+    const options = typePickerModal.querySelectorAll('.picker-option');
+    options.forEach(opt => {
+      const optValue = opt.getAttribute('data-value');
+      opt.classList.remove('selected');
+      if (optValue === currentValue) {
+        opt.classList.add('selected');
+      }
+    });
+    typePickerModal.classList.remove('hidden');
+  }
+
+  function closeTypePicker() {
+    if (typePickerModal) typePickerModal.classList.add('hidden');
+  }
+
+  function selectType(value, label) {
+    if (filterTypeInput) filterTypeInput.value = value;
+    if (filterTypeBtn) {
+      // 移除可能存在的✓符号
+      const cleanLabel = label.replace('✓', '').trim();
+      filterTypeBtn.textContent = cleanLabel || '全部';
+    }
+    closeTypePicker();
+    loadRecords();
+  }
+
+  function openCategoryPicker() {
+    if (!categoryPickerModal) return;
+    const categoryInput = recordForm.querySelector('[name="category"]');
+    const currentValue = categoryInput ? categoryInput.value : '';
+    const options = categoryPickerModal.querySelectorAll('.picker-option');
+    options.forEach(opt => {
+      const optValue = opt.getAttribute('data-value');
+      opt.classList.remove('selected');
+      if (optValue === currentValue) {
+        opt.classList.add('selected');
+      }
+    });
+    categoryPickerModal.classList.remove('hidden');
+  }
+
+  function closeCategoryPicker() {
+    if (categoryPickerModal) categoryPickerModal.classList.add('hidden');
+  }
+
+  function selectCategory(value, label) {
+    const categoryInput = recordForm.querySelector('[name="category"]');
+    if (categoryInput) categoryInput.value = value;
+    if (categoryBtn) {
+      // 移除可能存在的✓符号
+      const cleanLabel = label.replace(/✓/g, '').trim();
+      categoryBtn.textContent = cleanLabel || '选择分类';
+    }
+    closeCategoryPicker();
+  }
+
   function initMainPage() {
     navUsername.textContent = currentUsername || '用户';
+    // 初始化类型选择按钮文本
+    if (filterTypeBtn && filterTypeInput) {
+      const value = filterTypeInput.value || '';
+      const labels = { '': '全部', 'income': '收入', 'expense': '支出' };
+      filterTypeBtn.textContent = labels[value] || '全部';
+    }
     setView('list');
   }
 
@@ -559,7 +634,52 @@
   $('add-income').addEventListener('click', () => openModal('income'));
   $('add-expense').addEventListener('click', () => openModal('expense'));
   $('filter-btn').addEventListener('click', loadRecords);
-  if ($('filter-type')) $('filter-type').addEventListener('change', loadRecords);
+  
+  // 类型选择弹窗
+  if (filterTypeBtn) {
+    filterTypeBtn.addEventListener('click', openTypePicker);
+  }
+  if (pickerCancel) {
+    pickerCancel.addEventListener('click', closeTypePicker);
+  }
+  if (typePickerModal) {
+    const backdrop = typePickerModal.querySelector('.picker-modal-backdrop');
+    if (backdrop) {
+      backdrop.addEventListener('click', closeTypePicker);
+    }
+    const options = typePickerModal.querySelectorAll('.picker-option');
+    options.forEach(opt => {
+      opt.addEventListener('click', function() {
+        const value = this.getAttribute('data-value');
+        // 获取原始文本内容（不包含✓符号）
+        const label = this.textContent.replace(/✓/g, '').trim();
+        selectType(value, label);
+      });
+    });
+  }
+
+  // 分类选择弹窗
+  if (categoryBtn) {
+    categoryBtn.addEventListener('click', openCategoryPicker);
+  }
+  if (categoryPickerCancel) {
+    categoryPickerCancel.addEventListener('click', closeCategoryPicker);
+  }
+  if (categoryPickerModal) {
+    const backdrop = categoryPickerModal.querySelector('.picker-modal-backdrop');
+    if (backdrop) {
+      backdrop.addEventListener('click', closeCategoryPicker);
+    }
+    const options = categoryPickerModal.querySelectorAll('.picker-option');
+    options.forEach(opt => {
+      opt.addEventListener('click', function() {
+        const value = this.getAttribute('data-value');
+        // 获取原始文本内容（不包含✓符号）
+        const label = this.textContent.replace(/✓/g, '').trim();
+        selectCategory(value, label);
+      });
+    });
+  }
   if ($('filter-today')) {
     $('filter-today').addEventListener('click', function() {
       var now = new Date();

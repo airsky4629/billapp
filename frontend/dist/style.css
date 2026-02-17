@@ -230,15 +230,39 @@ body {
 
 .filter { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
 .filter.hidden { display: none !important; }
-.filter input[type="date"], .filter select {
-  padding: 8px 10px;
+.filter input[type="date"] {
+  padding: 10px 14px;
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.2);
-  background: rgba(255,255,255,0.08);
-  color: #e8e8e8;
-  font-size: 0.9rem;
+  border: none;
+  background: #f2f2f7;
+  color: #000;
+  font-size: 15px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  -webkit-appearance: none;
+  appearance: none;
 }
-.filter select { min-width: 80px; }
+.filter input[type="date"]:focus {
+  outline: none;
+  background: #e5e5ea;
+}
+.filter-type-btn {
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: #f2f2f7;
+  color: #007aff;
+  font-size: 15px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  min-width: 100px;
+  text-align: center;
+  transition: all 0.2s;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+}
+.filter-type-btn:active {
+  background: #e5e5ea;
+  transform: scale(0.97);
+}
 
 .actions { display: flex; gap: 10px; margin-bottom: 16px; }
 
@@ -279,32 +303,191 @@ body {
 .modal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.4);
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   z-index: 100;
-  padding: 20px;
+  padding: 0;
+  animation: fadeIn 0.2s ease-out;
 }
 .modal.hidden { display: none !important; }
 .modal-content {
-  background: #1a1a2e;
-  border-radius: 14px;
-  padding: 24px;
+  background: #ffffff;
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px;
   width: 100%;
-  max-width: 360px;
-  border: 1px solid rgba(255,255,255,0.1);
+  max-width: 480px;
+  border: none;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.3s ease-out;
 }
-.modal-content h3 { color: #e8e8e8; margin-bottom: 16px; font-size: 1.2rem; }
+.modal-content h3 { 
+  color: #000; 
+  margin-bottom: 20px; 
+  font-size: 20px; 
+  font-weight: 700;
+  text-align: center;
+}
 .modal-content input {
   width: 100%;
-  padding: 12px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.2);
-  background: rgba(255,255,255,0.06);
-  color: #fff;
-  font-size: 1rem;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  border: none;
+  background: #f2f2f7;
+  color: #000;
+  font-size: 17px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  -webkit-appearance: none;
+  appearance: none;
 }
-.modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+.modal-content input:focus {
+  outline: none;
+  background: #e5e5ea;
+}
+.modal-content input::placeholder {
+  color: #8e8e93;
+}
+.category-btn {
+  width: 100%;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  background: #f2f2f7;
+  color: #007aff;
+  font-size: 17px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+}
+.category-btn:active {
+  background: #e5e5ea;
+  transform: scale(0.98);
+}
+.modal-actions { display: flex; gap: 12px; margin-top: 20px; }
 .modal-actions .btn { flex: 1; }
+
+/* 类型选择弹窗和分类选择弹窗 */
+.picker-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-out;
+}
+.picker-modal.hidden { display: none !important; }
+.picker-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.picker-modal-content {
+  position: relative;
+  background: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  animation: scaleIn 0.3s ease-out;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.picker-header {
+  padding: 24px 20px 20px;
+  text-align: center;
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+}
+.picker-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #000;
+  margin: 0;
+  letter-spacing: 0.38px;
+}
+.picker-options {
+  padding: 8px 0;
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.picker-option {
+  width: 100%;
+  padding: 20px 24px;
+  min-height: 56px;
+  background: transparent;
+  border: none;
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+  color: #000;
+  font-size: 18px;
+  font-weight: 400;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.picker-option:last-of-type {
+  border-bottom: none;
+}
+.picker-option:hover {
+  background: #f2f2f7;
+}
+.picker-option:active {
+  background: #e5e5ea;
+}
+.picker-option.selected {
+  color: #007aff;
+  font-weight: 600;
+  background: #f2f2f7;
+}
+.picker-option.selected {
+  color: #007aff;
+  font-weight: 600;
+  background: #f2f2f7;
+}
+.picker-option.selected::after {
+  content: '✓';
+  color: #007aff;
+  font-weight: 600;
+  font-size: 20px;
+  margin-left: auto;
+}
+.picker-actions {
+  padding: 12px 20px 20px;
+  border-top: 0.5px solid rgba(0, 0, 0, 0.1);
+}
+.picker-cancel-btn {
+  width: 100%;
+  background: #f2f2f7;
+  color: #007aff;
+  font-weight: 600;
+  padding: 14px;
+  border-radius: 12px;
+}
+.picker-cancel-btn:active {
+  background: #e5e5ea;
+}
