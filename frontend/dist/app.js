@@ -228,24 +228,23 @@
     var startDow = first.getDay();
     var startBlank = startDow === 0 ? 6 : startDow - 1;
     var html = '<div class="cal-month"><div class="cal-month-row cal-month-head"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>';
-    var row = [];
-    for (var i = 0; i < startBlank; i++) row.push('<div class="cal-day empty"></div>');
+    var cells = [];
+    for (var i = 0; i < startBlank; i++) cells.push('<div class="cal-day empty"></div>');
     for (var d = 1; d <= last.getDate(); d++) {
       var key = y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
       var cell = byDay[key] || { income: 0, expense: 0 };
       var incText = cell.income ? ('+' + (cell.income || 0).toFixed(0)) : '';
       var expText = cell.expense ? ('-' + (cell.expense || 0).toFixed(0)) : '';
-      row.push(
+      cells.push(
         '<div class="cal-day clickable" data-date="' + key + '">' +
           '<span class="cal-n">' + d + '</span>' +
           '<span class="cal-inc">' + incText + '</span>' +
           '<span class="cal-exp">' + expText + '</span>' +
         '</div>'
       );
-      if (row.length === 7) { html += '<div class="cal-month-row">' + row.join('') + '</div>'; row = []; }
     }
-    if (row.length) { while (row.length < 7) row.push('<div class="cal-day empty"></div>'); html += '<div class="cal-month-row">' + row.join('') + '</div>'; }
-    html += '</div>';
+    while (cells.length % 7 !== 0) cells.push('<div class="cal-day empty"></div>');
+    html += '<div class="cal-month-grid">' + cells.join('') + '</div></div>';
     calendarWrap.innerHTML = html;
     calendarWrap.classList.remove('hidden');
     calendarWrap.querySelectorAll('.cal-day.clickable').forEach(function(el) {
