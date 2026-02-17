@@ -47,9 +47,24 @@
         <button type="button" id="period-prev" class="btn period-btn">‹</button>
         <span id="period-label" class="period-label"></span>
         <button type="button" id="period-next" class="btn period-btn">›</button>
-        <button type="button" id="period-today" class="btn period-btn current">当前</button>
       </section>
-      <p id="view-title" class="view-title hidden"></p>
+      <section class="filter" id="filter-section">
+        <span class="filter-dates hidden" id="filter-dates">
+          <input type="date" id="filter-start" />
+          <input type="date" id="filter-end" />
+          <button type="button" id="filter-btn" class="btn small">查询</button>
+        </span>
+        <select id="filter-type">
+          <option value="">全部</option>
+          <option value="income">收入</option>
+          <option value="expense">支出</option>
+        </select>
+        <button type="button" id="filter-today" class="btn small hidden">当前</button>
+      </section>
+      <section class="actions">
+        <button type="button" id="add-income" class="btn add income">+ 记收入</button>
+        <button type="button" id="add-expense" class="btn add expense">+ 记支出</button>
+      </section>
       <section class="summary">
         <div class="summary-item income">
           <span class="label">收入</span>
@@ -65,20 +80,6 @@
         </div>
       </section>
       <section id="calendar-wrap" class="calendar-wrap hidden"></section>
-      <section class="filter" id="filter-section">
-        <input type="date" id="filter-start" />
-        <input type="date" id="filter-end" />
-        <select id="filter-type">
-          <option value="">全部</option>
-          <option value="income">收入</option>
-          <option value="expense">支出</option>
-        </select>
-        <button type="button" id="filter-btn" class="btn small">查询</button>
-      </section>
-      <section class="actions">
-        <button type="button" id="add-income" class="btn add income">+ 记收入</button>
-        <button type="button" id="add-expense" class="btn add expense">+ 记支出</button>
-      </section>
       <section class="list-wrap">
         <ul id="record-list" class="record-list"></ul>
         <p id="list-empty" class="empty hidden">暂无记录</p>
@@ -91,7 +92,7 @@
       <h3 id="modal-title">记一笔</h3>
       <form id="record-form">
         <input type="hidden" name="type" value="expense" />
-        <input type="number" name="amount" step="0.01" min="0.01" placeholder="金额" required />
+        <input type="date" name="record_date" required placeholder="日期" />
         <input type="text" name="category" placeholder="分类（如：餐饮、交通）" list="categories" />
         <datalist id="categories">
           <option value="餐饮">
@@ -102,8 +103,8 @@
           <option value="医疗">
           <option value="其他">
         </datalist>
+        <input type="number" name="amount" step="0.01" min="0.01" placeholder="金额" required />
         <input type="text" name="note" placeholder="备注" />
-        <input type="date" name="record_date" required />
         <div class="modal-actions">
           <button type="button" id="modal-cancel" class="btn">取消</button>
           <button type="submit" class="btn primary">保存</button>

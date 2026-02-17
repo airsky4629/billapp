@@ -24,7 +24,6 @@
   const periodLabel = $('period-label');
   const periodPrev = $('period-prev');
   const periodNext = $('period-next');
-  const periodToday = $('period-today');
 
   let currentView = 'list'; // 'list' | 'week' | 'month' | 'year' | 'day'
   let calendarWeekStart = null; // Date 周一
@@ -108,16 +107,21 @@
       if (tabs.length) tabs.forEach(function(t) { t.classList.toggle('active', t.dataset.view === view); });
       var filterStart = $('filter-start');
       var filterEnd = $('filter-end');
+      var filterDates = $('filter-dates');
+      if (filterSection) filterSection.classList.remove('hidden');
       if (view === 'list') {
-        if (viewTitleEl) viewTitleEl.classList.add('hidden');
         if (calendarWrap) calendarWrap.classList.add('hidden');
         if (periodNav) periodNav.classList.add('hidden');
-        if (filterSection) filterSection.classList.remove('hidden');
+        if (filterDates) filterDates.classList.add('hidden');
+        var filterToday = $('filter-today');
+        if (filterToday) filterToday.classList.add('hidden');
         loadRecords();
         return;
       }
-      if (periodNav) periodNav.classList.remove('hidden');
-      if (filterSection) filterSection.classList.add('hidden');
+      if (filterDates) filterDates.classList.add('hidden');
+      var filterToday = $('filter-today');
+      if (filterToday) filterToday.classList.remove('hidden');
+      if (periodNav) periodNav.classList.toggle('hidden', view !== 'year');
       if (calendarWrap) calendarWrap.classList.remove('hidden');
       var r;
       var now = new Date();
@@ -126,28 +130,23 @@
         r = getWeekRangeFromMonday(calendarWeekStart);
         if (filterStart) filterStart.value = r.start;
         if (filterEnd) filterEnd.value = r.end;
-        if (viewTitleEl) { viewTitleEl.textContent = r.start + ' ~ ' + r.end; viewTitleEl.classList.remove('hidden'); }
         if (periodLabel) periodLabel.textContent = r.start + ' 周';
       } else if (view === 'month') {
         if (!calendarMonth) calendarMonth = { y: now.getFullYear(), m: now.getMonth() + 1 };
         r = getMonthRangeFromYM(calendarMonth.y, calendarMonth.m);
         if (filterStart) filterStart.value = r.start;
         if (filterEnd) filterEnd.value = r.end;
-        if (viewTitleEl) { viewTitleEl.textContent = calendarMonth.y + '年' + calendarMonth.m + '月'; viewTitleEl.classList.remove('hidden'); }
         if (periodLabel) periodLabel.textContent = calendarMonth.y + '年' + calendarMonth.m + '月';
       } else if (view === 'year') {
         if (!calendarYear) calendarYear = now.getFullYear();
         r = getYearRange(calendarYear);
         if (filterStart) filterStart.value = r.start;
         if (filterEnd) filterEnd.value = r.end;
-        if (viewTitleEl) { viewTitleEl.textContent = calendarYear + '年 全年'; viewTitleEl.classList.remove('hidden'); }
         if (periodLabel) periodLabel.textContent = calendarYear + '年';
       } else if (view === 'day') {
         if (!calendarDay) calendarDay = toLocalDateStr(now);
         if (filterStart) filterStart.value = calendarDay;
         if (filterEnd) filterEnd.value = calendarDay;
-        var d = new Date(calendarDay + 'T12:00:00');
-        if (viewTitleEl) { viewTitleEl.textContent = d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日'; viewTitleEl.classList.remove('hidden'); }
         if (periodLabel) periodLabel.textContent = calendarDay;
       }
       loadRecords();
@@ -329,17 +328,15 @@
     arr.forEach((r) => {
       const li = document.createElement('li');
       const dateStr = formatDate(r.record_date || r.created_at);
+      const typeText = r.type === 'income' ? '收入' : '支出';
+      const amountText = (r.type === 'income' ? '+' : '-') + Number(r.amount).toFixed(2);
+      const noteText = escapeHtml(r.note || '');
       li.innerHTML = `
-        <span>
-          <span class="type ${r.type}">${r.type === 'income' ? '收入' : '支出'}</span>
-          <span class="category">${escapeHtml(r.category || '')}</span>
-          <span class="date">${dateStr}</span>
-          ${r.note ? '<br><span class="note" style="font-size:0.85rem;opacity:0.8">' + escapeHtml(r.note) + '</span>' : ''}
-        </span>
-        <span>
-          <span class="amount ${r.type}">${r.type === 'income' ? '+' : '-'}${Number(r.amount).toFixed(2)}</span>
-          <button type="button" class="del" data-id="${r.id}">删除</button>
-        </span>
+        <span class="rec-date">${dateStr}</span>
+        <span class="rec-type type ${r.type}">${typeText}</span>
+        <span class="rec-amount amount ${r.type}">${amountText}</span>
+        <span class="rec-note">${noteText}</span>
+        <button type="button" class="del" data-id="${r.id}">删除</button>
       `;
       li.querySelector('.del').addEventListener('click', () => deleteRecord(r.id));
       recordList.appendChild(li);
@@ -353,6 +350,17 @@
   }
 
   function loadSummary() {
+    if (currentView === 'list') {
+      let url = '/api/summary';
+      api(url)
+        .then((d) => {
+          $('sum-income').textContent = (d.income || 0).toFixed(2);
+          $('sum-expense').textContent = (d.expense || 0).toFixed(2);
+          $('sum-balance').textContent = (d.balance || 0).toFixed(2);
+        })
+        .catch(() => {});
+      return;
+    }
     const start = $('filter-start').value;
     const end = $('filter-end').value;
     let url = '/api/summary';
@@ -374,8 +382,10 @@
     var type = ($('filter-type') && $('filter-type').value) || '';
     var pageSize = currentView === 'year' ? 500 : 100;
     var params = new URLSearchParams({ page: 1, pageSize: pageSize });
-    if (start) params.set('startDate', start);
-    if (end) params.set('endDate', end);
+    if (currentView !== 'list') {
+      if (start) params.set('startDate', start);
+      if (end) params.set('endDate', end);
+    }
     if (type) params.set('type', type);
     api('/api/records?' + params.toString())
       .then(function(d) {
@@ -419,11 +429,7 @@
 
   function initMainPage() {
     navUsername.textContent = currentUsername || '用户';
-    const today = new Date().toISOString().slice(0, 10);
-    const firstDay = today.slice(0, 8) + '01';
-    $('filter-start').value = firstDay;
-    $('filter-end').value = today;
-    loadRecords();
+    setView('list');
   }
 
   // 登录
@@ -496,21 +502,18 @@
         if ($('filter-start')) $('filter-start').value = r.start;
         if ($('filter-end')) $('filter-end').value = r.end;
         if (periodLabel) periodLabel.textContent = r.start + ' 周';
-        if (viewTitleEl) viewTitleEl.textContent = r.start + ' ~ ' + r.end;
       } else if (currentView === 'month' && calendarMonth) {
         if (calendarMonth.m === 1) { calendarMonth.m = 12; calendarMonth.y--; } else calendarMonth.m--;
         var r = getMonthRangeFromYM(calendarMonth.y, calendarMonth.m);
         if ($('filter-start')) $('filter-start').value = r.start;
         if ($('filter-end')) $('filter-end').value = r.end;
         if (periodLabel) periodLabel.textContent = calendarMonth.y + '年' + calendarMonth.m + '月';
-        if (viewTitleEl) viewTitleEl.textContent = calendarMonth.y + '年' + calendarMonth.m + '月';
       } else if (currentView === 'year' && calendarYear) {
         calendarYear--;
         var r = getYearRange(calendarYear);
         if ($('filter-start')) $('filter-start').value = r.start;
         if ($('filter-end')) $('filter-end').value = r.end;
         if (periodLabel) periodLabel.textContent = calendarYear + '年';
-        if (viewTitleEl) viewTitleEl.textContent = calendarYear + '年 全年';
       } else if (currentView === 'day' && calendarDay) {
         var d = new Date(calendarDay + 'T12:00:00');
         d.setDate(d.getDate() - 1);
@@ -518,7 +521,6 @@
         if ($('filter-start')) $('filter-start').value = calendarDay;
         if ($('filter-end')) $('filter-end').value = calendarDay;
         if (periodLabel) periodLabel.textContent = calendarDay;
-        if (viewTitleEl) viewTitleEl.textContent = d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
       }
       loadRecords();
     } catch (e) { console.error(e); }
@@ -531,21 +533,18 @@
         if ($('filter-start')) $('filter-start').value = r.start;
         if ($('filter-end')) $('filter-end').value = r.end;
         if (periodLabel) periodLabel.textContent = r.start + ' 周';
-        if (viewTitleEl) viewTitleEl.textContent = r.start + ' ~ ' + r.end;
       } else if (currentView === 'month' && calendarMonth) {
         if (calendarMonth.m === 12) { calendarMonth.m = 1; calendarMonth.y++; } else calendarMonth.m++;
         var r = getMonthRangeFromYM(calendarMonth.y, calendarMonth.m);
         if ($('filter-start')) $('filter-start').value = r.start;
         if ($('filter-end')) $('filter-end').value = r.end;
         if (periodLabel) periodLabel.textContent = calendarMonth.y + '年' + calendarMonth.m + '月';
-        if (viewTitleEl) viewTitleEl.textContent = calendarMonth.y + '年' + calendarMonth.m + '月';
       } else if (currentView === 'year' && calendarYear) {
         calendarYear++;
         var r = getYearRange(calendarYear);
         if ($('filter-start')) $('filter-start').value = r.start;
         if ($('filter-end')) $('filter-end').value = r.end;
         if (periodLabel) periodLabel.textContent = calendarYear + '年';
-        if (viewTitleEl) viewTitleEl.textContent = calendarYear + '年 全年';
       } else if (currentView === 'day' && calendarDay) {
         var d = new Date(calendarDay + 'T12:00:00');
         d.setDate(d.getDate() + 1);
@@ -553,23 +552,36 @@
         if ($('filter-start')) $('filter-start').value = calendarDay;
         if ($('filter-end')) $('filter-end').value = calendarDay;
         if (periodLabel) periodLabel.textContent = calendarDay;
-        if (viewTitleEl) viewTitleEl.textContent = d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
       }
       loadRecords();
     } catch (e) { console.error(e); }
   });
-  if (periodToday) periodToday.addEventListener('click', function() {
-    var now = new Date();
-    if (currentView === 'week') calendarWeekStart = getThisWeekMonday();
-    else if (currentView === 'month') calendarMonth = { y: now.getFullYear(), m: now.getMonth() + 1 };
-    else if (currentView === 'year') calendarYear = now.getFullYear();
-    else if (currentView === 'day') calendarDay = toLocalDateStr(now);
-    setView(currentView);
-  });
-
   $('add-income').addEventListener('click', () => openModal('income'));
   $('add-expense').addEventListener('click', () => openModal('expense'));
   $('filter-btn').addEventListener('click', loadRecords);
+  if ($('filter-type')) $('filter-type').addEventListener('change', loadRecords);
+  if ($('filter-today')) {
+    $('filter-today').addEventListener('click', function() {
+      var now = new Date();
+      if (currentView === 'year') {
+        calendarYear = now.getFullYear();
+        setView('year');
+      } else if (currentView === 'week') {
+        calendarWeekStart = getThisWeekMonday();
+        setView('week');
+      } else if (currentView === 'month') {
+        calendarMonth = { y: now.getFullYear(), m: now.getMonth() + 1 };
+        setView('month');
+      } else {
+        var today = toLocalDateStr(now);
+        var filterStart = $('filter-start');
+        var filterEnd = $('filter-end');
+        if (filterStart) filterStart.value = today;
+        if (filterEnd) filterEnd.value = today;
+        loadRecords();
+      }
+    });
+  }
   modalCancel.addEventListener('click', closeModal);
   modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
