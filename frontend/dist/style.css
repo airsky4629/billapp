@@ -177,7 +177,7 @@ body {
 .cal-week-cell.clickable { cursor: pointer; transition: background 0.2s; }
 .cal-week-cell.clickable:active { background: rgba(78, 205, 196, 0.2); }
 
-.cal-month { }
+.cal-month { display: block; }
 .cal-month-row { display: flex; gap: 4px; margin-bottom: 4px; }
 .cal-month-row.cal-month-head { margin-bottom: 8px; }
 .cal-month-row.cal-month-head span { flex: 1; text-align: center; font-size: 0.75rem; color: rgba(255,255,255,0.6); }
@@ -211,7 +211,7 @@ body {
 .cal-year-card.clickable { cursor: pointer; transition: background 0.2s, transform 0.1s; }
 .cal-year-card.clickable:active { background: rgba(78, 205, 196, 0.2); transform: scale(0.98); }
 
-.cal-day-view { }
+.cal-day-view { display: block; }
 .cal-day-summary {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -307,6 +307,13 @@ body {
 .bottom-actions .btn.add {
   flex: 1;
 }
+.bottom-actions .filter-type-btn {
+  flex: 0 0 auto;
+  padding: 14px 14px;
+  min-width: 92px;
+  text-align: center;
+  border-radius: 10px;
+}
 
 .record-list { list-style: none; }
 .record-list li {
@@ -342,38 +349,65 @@ body {
 .empty { text-align: center; color: rgba(255,255,255,0.6); padding: 24px; }
 .list-wrap { min-height: 120px; padding-bottom: calc(180px + max(env(safe-area-inset-bottom), 20px)); }
 
-.modal {
+.record-modal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.6);
+  z-index: 200;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  z-index: 100;
-  padding: 20px;
+  padding: 0 20px;
+  padding-bottom: calc(20px + max(env(safe-area-inset-bottom), 20px));
 }
-.modal.hidden { display: none !important; }
-.modal-content {
+.record-modal.hidden { display: none !important; }
+.record-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+.record-modal-content {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
   background: #1a1a2e;
-  border-radius: 14px;
+  border-radius: 20px 20px 0 0;
   padding: 24px;
-  width: 100%;
-  max-width: 360px;
   border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+  animation: slideUp 0.3s ease-out;
+  max-height: 90vh;
+  overflow-y: auto;
 }
-.modal-content h3 { color: #e8e8e8; margin-bottom: 16px; font-size: 1.2rem; }
-.modal-content input {
+.record-modal-content h3 {
+  color: #e8e8e8;
+  margin-bottom: 20px;
+  font-size: 1.2rem;
+  text-align: center;
+}
+.record-modal-content input {
   width: 100%;
-  padding: 12px;
-  margin-bottom: 10px;
-  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+  border-radius: 10px;
   border: 1px solid rgba(255,255,255,0.2);
-  background: rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.08);
   color: #fff;
   font-size: 1rem;
 }
-.modal-actions { display: flex; gap: 10px; margin-top: 16px; }
-.modal-actions .btn { flex: 1; }
+.record-modal-content input::placeholder {
+  color: rgba(255,255,255,0.5);
+}
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+.modal-actions .btn {
+  flex: 1;
+  padding: 14px;
+  font-size: 1rem;
+}
 
 .picker-modal {
   position: fixed;

@@ -120,14 +120,10 @@
         if (calendarWrap) calendarWrap.classList.add('hidden');
         if (periodNav) periodNav.classList.add('hidden');
         if (filterDates) filterDates.classList.add('hidden');
-        var filterToday = $('filter-today');
-        if (filterToday) filterToday.classList.add('hidden');
         loadRecords();
         return;
       }
       if (filterDates) filterDates.classList.add('hidden');
-      var filterToday = $('filter-today');
-      if (filterToday) filterToday.classList.remove('hidden');
       if (periodNav) periodNav.classList.toggle('hidden', view !== 'year');
       if (calendarWrap) calendarWrap.classList.remove('hidden');
       var r;
@@ -682,30 +678,13 @@
       });
     });
   }
-  if ($('filter-today')) {
-    $('filter-today').addEventListener('click', function() {
-      var now = new Date();
-      if (currentView === 'year') {
-        calendarYear = now.getFullYear();
-        setView('year');
-      } else if (currentView === 'week') {
-        calendarWeekStart = getThisWeekMonday();
-        setView('week');
-      } else if (currentView === 'month') {
-        calendarMonth = { y: now.getFullYear(), m: now.getMonth() + 1 };
-        setView('month');
-      } else {
-        var today = toLocalDateStr(now);
-        var filterStart = $('filter-start');
-        var filterEnd = $('filter-end');
-        if (filterStart) filterStart.value = today;
-        if (filterEnd) filterEnd.value = today;
-        loadRecords();
-      }
-    });
-  }
   modalCancel.addEventListener('click', closeModal);
-  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+  if (modal) {
+    const backdrop = modal.querySelector('.record-modal-backdrop');
+    if (backdrop) {
+      backdrop.addEventListener('click', closeModal);
+    }
+  }
 
   recordForm.addEventListener('submit', (e) => {
     e.preventDefault();

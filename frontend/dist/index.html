@@ -70,14 +70,13 @@
       </section>
       <section class="bottom-actions">
         <div class="filter-buttons">
-          <button type="button" id="filter-type-btn" class="btn filter-type-btn">
-            <span id="filter-type-label">全部</span>
-          </button>
           <button type="button" id="filter-btn" class="btn small hidden">查询</button>
-          <button type="button" id="filter-today" class="btn small hidden">当前</button>
         </div>
         <div class="record-buttons">
           <button type="button" id="add-income" class="btn add income">+ 记收入</button>
+          <button type="button" id="filter-type-btn" class="btn filter-type-btn">
+            <span id="filter-type-label">全部</span>
+          </button>
           <button type="button" id="add-expense" class="btn add expense">+ 记支出</button>
         </div>
       </section>
@@ -90,8 +89,9 @@
     </div>
   </div>
 
-  <div id="modal" class="modal hidden">
-    <div class="modal-content">
+  <div id="modal" class="record-modal hidden">
+    <div class="record-modal-backdrop"></div>
+    <div class="record-modal-content">
       <h3 id="modal-title">记一笔</h3>
       <form id="record-form">
         <input type="hidden" name="type" value="expense" />
