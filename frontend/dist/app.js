@@ -280,7 +280,7 @@
       var g = byMonth[mo];
       var incTxt = g.income ? ('+' + (g.income || 0).toFixed(0)) : '';
       var expTxt = g.expense ? ('-' + (g.expense || 0).toFixed(0)) : '';
-      html += '<div class="cal-year-card clickable" data-month="' + mo + '"><div class="cal-year-title">' + mo + '月</div><div class="cal-year-row"><span class="amount income">' + incTxt + '</span></div><div class="cal-year-row"><span class="amount expense">' + expTxt + '</span></div></div>';
+      html += '<div class="cal-year-card clickable" data-month="' + mo + '"><div class="cal-year-title">' + mo + '月</div><div class="cal-year-row"><span class="amount income">' + incTxt + '</span><span class="amount expense">' + expTxt + '</span></div></div>';
     }
     html += '</div>';
     calendarWrap.innerHTML = html;
