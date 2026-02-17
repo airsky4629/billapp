@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>随手记 - 多用户记账</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <div id="login-page" class="page">
+      <header class="header">
+        <h1>随手记</h1>
+        <p class="subtitle">多用户记账</p>
+      </header>
+      <div class="card">
+        <div class="tabs">
+          <button type="button" class="tab active" data-tab="login">登录</button>
+          <button type="button" class="tab" data-tab="register">注册</button>
+        </div>
+        <form id="login-form" class="form">
+          <input type="text" name="username" placeholder="用户名" required autocomplete="username" />
+          <input type="password" name="password" placeholder="密码" required autocomplete="current-password" />
+          <button type="submit" class="btn primary">登录</button>
+        </form>
+        <form id="register-form" class="form hidden">
+          <input type="text" name="username" placeholder="用户名（至少2位）" required />
+          <input type="password" name="password" placeholder="密码（至少6位）" required />
+          <button type="submit" class="btn primary">注册</button>
+        </form>
+      </div>
+      <p id="auth-msg" class="msg"></p>
+    </div>
+
+    <div id="main-page" class="page hidden">
+      <header class="header bar">
+        <span class="user">欢迎，<strong id="nav-username"></strong></span>
+        <button type="button" id="logout-btn" class="btn small">退出</button>
+      </header>
+      <section class="summary">
+        <div class="summary-item income">
+          <span class="label">收入</span>
+          <span id="sum-income" class="amount">0.00</span>
+        </div>
+        <div class="summary-item expense">
+          <span class="label">支出</span>
+          <span id="sum-expense" class="amount">0.00</span>
+        </div>
+        <div class="summary-item balance">
+          <span class="label">结余</span>
+          <span id="sum-balance" class="amount">0.00</span>
+        </div>
+      </section>
+      <section class="filter">
+        <input type="date" id="filter-start" />
+        <input type="date" id="filter-end" />
+        <select id="filter-type">
+          <option value="">全部</option>
+          <option value="income">收入</option>
+          <option value="expense">支出</option>
+        </select>
+        <button type="button" id="filter-btn" class="btn small">查询</button>
+      </section>
+      <section class="actions">
+        <button type="button" id="add-income" class="btn add income">+ 记收入</button>
+        <button type="button" id="add-expense" class="btn add expense">+ 记支出</button>
+      </section>
+      <section class="list-wrap">
+        <ul id="record-list" class="record-list"></ul>
+        <p id="list-empty" class="empty hidden">暂无记录</p>
+      </section>
+    </div>
+  </div>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <h3 id="modal-title">记一笔</h3>
+      <form id="record-form">
+        <input type="hidden" name="type" value="expense" />
+        <input type="number" name="amount" step="0.01" min="0.01" placeholder="金额" required />
+        <input type="text" name="category" placeholder="分类（如：餐饮、交通）" list="categories" />
+        <datalist id="categories">
+          <option value="餐饮">
+          <option value="交通">
+          <option value="购物">
+          <option value="住房">
+          <option value="娱乐">
+          <option value="医疗">
+          <option value="其他">
+        </datalist>
+        <input type="text" name="note" placeholder="备注" />
+        <input type="date" name="record_date" required />
+        <div class="modal-actions">
+          <button type="button" id="modal-cancel" class="btn">取消</button>
+          <button type="submit" class="btn primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
