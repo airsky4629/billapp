@@ -8,6 +8,7 @@
 .
 ├── docker-compose.yml   # 编排：mysql / backend / frontend
 ├── start.sh             # 一键启动脚本
+├── stop.sh              # 一键关闭所有容器
 ├── DESIGN.md            # 设计说明
 ├── README.md            # 本文件：使用方式与测试访问
 ├── mysql/
@@ -56,7 +57,13 @@ chmod +x start.sh
 
 ### 3. 停止服务
 
-在项目根目录执行：
+在项目根目录执行（推荐使用脚本）：
+
+```bash
+./stop.sh
+```
+
+或直接使用 compose 命令：
 
 ```bash
 docker compose down
