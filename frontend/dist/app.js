@@ -759,7 +759,14 @@
   });
 
   document.querySelectorAll('.view-tab').forEach(function(tab) {
-    tab.addEventListener('click', function() { setView(tab.dataset.view); });
+    tab.addEventListener('click', function() {
+      var view = tab.dataset.view;
+      var now = new Date();
+      if (view === 'week') calendarWeekStart = getThisWeekMonday();
+      else if (view === 'month') calendarMonth = { y: now.getFullYear(), m: now.getMonth() + 1 };
+      else if (view === 'year') calendarYear = now.getFullYear();
+      setView(view);
+    });
   });
 
   if (periodPrev) periodPrev.addEventListener('click', function() {
