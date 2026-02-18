@@ -181,7 +181,7 @@
         return;
       }
       if (filterDates) filterDates.classList.add('hidden');
-      if (periodNav) periodNav.classList.toggle('hidden', view !== 'year');
+      if (periodNav) periodNav.classList.toggle('hidden', view !== 'year' && view !== 'week' && view !== 'month');
       if (calendarWrap) calendarWrap.classList.remove('hidden');
       var r;
       var now = new Date();
