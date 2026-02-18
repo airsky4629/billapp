@@ -115,6 +115,36 @@ app.get('/api/me', authMiddleware, (req, res) => {
   res.json({ code: 0, userId: req.userId, username: req.username });
 });
 
+// 获取分类列表（从当前用户历史记录中 distinct）
+// 可选参数：type=income|expense，用于筛选收入/支出分类
+app.get('/api/categories', authMiddleware, async (req, res) => {
+  const { type } = req.query || {};
+  const userId = parseInt(req.userId, 10);
+  if (!userId || userId < 1) {
+    return res.status(401).json({ code: 401, message: '用户无效，请重新登录' });
+  }
+  try {
+    const db = await getPool();
+    let where = 'user_id = ?';
+    const params = [userId];
+    if (type && ['income', 'expense'].includes(type)) {
+      where += ' AND type = ?';
+      params.push(type);
+    }
+    const [rows] = await db.execute(
+      `SELECT DISTINCT category FROM records WHERE ${where} ORDER BY category ASC`,
+      params
+    );
+    const list = (rows || [])
+      .map((r) => (r && r.category != null ? String(r.category).trim() : ''))
+      .filter(Boolean);
+    res.json({ code: 0, list });
+  } catch (e) {
+    console.error('查询分类失败', e);
+    res.status(500).json({ code: 500, message: '查询分类失败' });
+  }
+});
+
 // 添加记账记录
 app.post('/api/records', authMiddleware, async (req, res) => {
   const { type, amount, category, note, record_date } = req.body || {};

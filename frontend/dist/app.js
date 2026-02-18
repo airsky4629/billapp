@@ -38,12 +38,62 @@
   const categoryBtn = $('category-btn');
   const categoryPickerModal = $('category-picker-modal');
   const categoryPickerCancel = $('category-picker-cancel');
+  const categoryCustomInput = $('category-custom-input');
+  const categoryCustomOk = $('category-custom-ok');
 
   let currentView = 'list'; // 'list' | 'week' | 'month' | 'year' | 'day'
   let calendarWeekStart = null; // Date 周一
   let calendarMonth = null;   // { y, m }
   let calendarYear = null;    // number
   let calendarDay = null;     // string YYYY-MM-DD
+
+  const DEFAULT_CATEGORIES = ['餐饮', '交通', '购物', '住房', '娱乐', '医疗', '其他'];
+
+  function normalizeCategory(v) {
+    return String(v || '').replace(/\s+/g, ' ').trim().slice(0, 50);
+  }
+
+  function uniq(arr) {
+    const seen = new Set();
+    const out = [];
+    (arr || []).forEach((x) => {
+      const k = String(x);
+      if (!k) return;
+      if (seen.has(k)) return;
+      seen.add(k);
+      out.push(k);
+    });
+    return out;
+  }
+
+  function renderCategoryOptions(list, selectedValue) {
+    if (!categoryPickerModal) return;
+    const wrap = categoryPickerModal.querySelector('.picker-options');
+    if (!wrap) return;
+    const selected = normalizeCategory(selectedValue);
+    wrap.innerHTML = (list || []).map((c) => {
+      const label = escapeHtml(c);
+      const value = String(c)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+      const cls = normalizeCategory(c) === selected ? 'picker-option selected' : 'picker-option';
+      return `<button type="button" class="${cls}" data-value="${value}">${label}</button>`;
+    }).join('');
+  }
+
+  function loadDistinctCategoriesForCurrentRecord() {
+    if (!categoryPickerModal) return Promise.resolve([]);
+    const t = recordForm && recordForm.querySelector ? recordForm.querySelector('[name="type"]') : null;
+    const recordType = (t && t.value) ? t.value : '';
+    const qs = new URLSearchParams();
+    if (recordType && (recordType === 'income' || recordType === 'expense')) qs.set('type', recordType);
+    const url = '/api/categories' + (qs.toString() ? ('?' + qs.toString()) : '');
+    return api(url)
+      .then((d) => Array.isArray(d && d.list) ? d.list : [])
+      .catch(() => []);
+  }
 
   function showPage(showMain) {
     loginPage.classList.toggle('hidden', showMain);
@@ -441,6 +491,7 @@
       // 分类输入框本身就是触发器（readonly input）
       if ('value' in categoryBtn) categoryBtn.value = '';
     }
+    if (categoryCustomInput) categoryCustomInput.value = '';
     modal.classList.remove('hidden');
   }
 
@@ -604,15 +655,20 @@
     if (!categoryPickerModal) return;
     const categoryInput = recordForm.querySelector('[name="category"]');
     const currentValue = categoryInput ? categoryInput.value : '';
-    const options = categoryPickerModal.querySelectorAll('.picker-option');
-    options.forEach(opt => {
-      const optValue = opt.getAttribute('data-value');
-      opt.classList.remove('selected');
-      if (optValue === currentValue) {
-        opt.classList.add('selected');
-      }
-    });
+    if (categoryCustomInput) categoryCustomInput.value = normalizeCategory(currentValue);
     categoryPickerModal.classList.remove('hidden');
+
+    // 每次打开时，从 DB distinct 拉取并合并默认分类
+    loadDistinctCategoriesForCurrentRecord().then((dbList) => {
+      const defaults = DEFAULT_CATEGORIES.slice();
+      const fromDb = (dbList || []).map(normalizeCategory).filter(Boolean);
+      const merged = uniq(defaults.concat(fromDb));
+      // 保持默认分类在前，剩余按字母序
+      const defaultSet = new Set(defaults);
+      const tail = merged.filter(x => !defaultSet.has(x)).sort((a, b) => a.localeCompare(b, 'zh-Hans-CN'));
+      const finalList = defaults.concat(tail);
+      renderCategoryOptions(finalList, currentValue);
+    });
   }
 
   function closeCategoryPicker() {
@@ -628,6 +684,7 @@
       if ('value' in categoryBtn) categoryBtn.value = cleanLabel || '';
       else categoryBtn.textContent = cleanLabel || '选择分类';
     }
+    if (categoryCustomInput) categoryCustomInput.value = normalizeCategory(value);
     closeCategoryPicker();
   }
 
@@ -832,14 +889,35 @@
     if (backdrop) {
       backdrop.addEventListener('click', closeCategoryPicker);
     }
-    const options = categoryPickerModal.querySelectorAll('.picker-option');
-    options.forEach(opt => {
-      opt.addEventListener('click', function() {
-        const value = this.getAttribute('data-value');
-        // 获取原始文本内容（不包含✓符号）
-        const label = this.textContent.replace(/✓/g, '').trim();
+    // 事件委托：适配动态生成的分类按钮
+    const optionsWrap = categoryPickerModal.querySelector('.picker-options');
+    if (optionsWrap) {
+      optionsWrap.addEventListener('click', function(e) {
+        const btn = e.target && e.target.closest ? e.target.closest('.picker-option') : null;
+        if (!btn) return;
+        const value = btn.getAttribute('data-value');
+        const label = btn.textContent.replace(/✓/g, '').trim();
         selectCategory(value, label);
       });
+    }
+  }
+
+  // 自定义分类输入
+  if (categoryCustomOk) {
+    categoryCustomOk.addEventListener('click', function() {
+      const v = normalizeCategory(categoryCustomInput ? categoryCustomInput.value : '');
+      if (!v) return;
+      selectCategory(v, v);
+    });
+  }
+  if (categoryCustomInput) {
+    categoryCustomInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const v = normalizeCategory(categoryCustomInput.value);
+        if (!v) return;
+        selectCategory(v, v);
+      }
     });
   }
   modalCancel.addEventListener('click', closeModal);

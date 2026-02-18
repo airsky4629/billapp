@@ -128,13 +128,11 @@
     <div class="picker-modal-content">
       <h3 class="picker-title">选择分类</h3>
       <div class="picker-options">
-        <button type="button" class="picker-option" data-value="餐饮">餐饮</button>
-        <button type="button" class="picker-option" data-value="交通">交通</button>
-        <button type="button" class="picker-option" data-value="购物">购物</button>
-        <button type="button" class="picker-option" data-value="住房">住房</button>
-        <button type="button" class="picker-option" data-value="娱乐">娱乐</button>
-        <button type="button" class="picker-option" data-value="医疗">医疗</button>
-        <button type="button" class="picker-option" data-value="其他">其他</button>
+        <!-- 选项将由 JS 动态生成：默认分类 + DB distinct 分类 -->
+      </div>
+      <div class="category-custom">
+        <input type="text" id="category-custom-input" placeholder="自定义分类（可输入）" maxlength="50" />
+        <button type="button" id="category-custom-ok" class="btn small primary">使用</button>
       </div>
       <button type="button" id="category-picker-cancel" class="btn picker-cancel">取消</button>
     </div>
