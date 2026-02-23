@@ -71,7 +71,24 @@ if [ -n "$RUNNING" ]; then
 fi
 
 echo ">>> 构建并启动所有服务..."
-$COMPOSE_CMD "${COMPOSE_FILES[@]}" up -d --build
+case "${ARCH_CHOICE:-1}" in
+  2)
+    echo ">>> 使用 docker build 强制构建 x86 (linux/amd64) 镜像..."
+
+    echo ">>> 构建 backend 镜像 (linux/amd64)..."
+    docker build --platform linux/amd64 -t billapp-backend ./backend
+
+    echo ">>> 构建 frontend 镜像 (linux/amd64)..."
+    docker build --platform linux/amd64 -t billapp-frontend ./frontend
+
+    echo ">>> 使用 compose 启动服务（不再额外构建，只复用已构建的 amd64 镜像）..."
+    $COMPOSE_CMD "${COMPOSE_FILES[@]}" up -d
+    ;;
+  *)
+    echo ">>> 使用本机默认架构，通过 compose 构建并启动服务..."
+    $COMPOSE_CMD "${COMPOSE_FILES[@]}" up -d --build
+    ;;
+esac
 
 echo ""
 echo ">>> 等待 MySQL 就绪..."

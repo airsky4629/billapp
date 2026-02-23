@@ -93,8 +93,22 @@ echo ""
 # 第一步：构建 Docker 镜像
 ###########################################################
 
-echo ">>> [1/3] 构建 Docker 镜像 (根据 docker-compose.yml)..."
-$COMPOSE_CMD "${COMPOSE_FILES[@]}" build
+echo ">>> [1/3] 构建 Docker 镜像..."
+case "${ARCH_CHOICE:-1}" in
+  2)
+    echo ">>> 使用 docker build 强制构建 x86 (linux/amd64) 镜像..."
+
+    echo ">>> 构建 backend 镜像 (linux/amd64)..."
+    docker build --platform linux/amd64 -t billapp-backend ./backend
+
+    echo ">>> 构建 frontend 镜像 (linux/amd64)..."
+    docker build --platform linux/amd64 -t billapp-frontend ./frontend
+    ;;
+  *)
+    echo ">>> 根据 docker-compose.yml 构建镜像（本机默认架构）..."
+    $COMPOSE_CMD -f docker-compose.yml build
+    ;;
+esac
 
 echo ""
 echo ">>> 构建完成，本地 billapp 相关镜像："
