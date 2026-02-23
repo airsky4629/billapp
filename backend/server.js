@@ -288,7 +288,7 @@ async function authMiddleware(req, res, next) {
 
 // 请求频率限制
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 分钟
+  windowMs: 1 * 60 * 1000, // 1 分钟
   max: 5, // 最多 5 次请求
   message: { code: 429, message: '请求过于频繁，请稍后再试' },
   standardHeaders: true,
