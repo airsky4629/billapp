@@ -116,7 +116,7 @@ app.get('/api/me', authMiddleware, (req, res) => {
 });
 
 // 获取分类列表（从当前用户历史记录中 distinct）
-// 可选参数：type=income|expense，用于筛选收入/支出分类
+// 可选参数：type=expense|debt_lend|debt_favor，用于筛选支出/外债分类
 app.get('/api/categories', authMiddleware, async (req, res) => {
   const { type } = req.query || {};
   const userId = parseInt(req.userId, 10);
@@ -127,7 +127,8 @@ app.get('/api/categories', authMiddleware, async (req, res) => {
     const db = await getPool();
     let where = 'user_id = ?';
     const params = [userId];
-    if (type && ['income', 'expense'].includes(type)) {
+    const validTypes = ['expense', 'debt_lend', 'debt_favor'];
+    if (type && validTypes.includes(type)) {
       where += ' AND type = ?';
       params.push(type);
     }
@@ -148,8 +149,9 @@ app.get('/api/categories', authMiddleware, async (req, res) => {
 // 添加记账记录
 app.post('/api/records', authMiddleware, async (req, res) => {
   const { type, amount, category, note, record_date } = req.body || {};
-  if (!type || !['income', 'expense'].includes(type) || amount == null || amount === '') {
-    return res.status(400).json({ code: 400, message: '类型为 income/expense，金额必填' });
+  const validTypes = ['expense', 'debt_lend', 'debt_favor'];
+  if (!type || !validTypes.includes(type) || amount == null || amount === '') {
+    return res.status(400).json({ code: 400, message: '类型为 expense/debt_lend/debt_favor，金额必填' });
   }
   const num = parseFloat(amount);
   if (isNaN(num) || num <= 0) {
@@ -203,7 +205,8 @@ app.get('/api/records', authMiddleware, async (req, res) => {
       where += ' AND record_date <= ?';
       params.push(endDate);
     }
-    if (type && ['income', 'expense'].includes(type)) {
+    const validTypes = ['expense', 'debt_lend', 'debt_favor'];
+    if (type && validTypes.includes(type)) {
       where += ' AND type = ?';
       params.push(type);
     }
@@ -251,7 +254,7 @@ app.delete('/api/records/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// 统计汇总（按日期范围）
+// 统计汇总（按日期范围）：支出、借出、人情往来
 app.get('/api/summary', authMiddleware, async (req, res) => {
   const { startDate, endDate } = req.query;
   let where = 'user_id = ?';
@@ -270,9 +273,17 @@ app.get('/api/summary', authMiddleware, async (req, res) => {
       `SELECT type, SUM(amount) as total FROM records WHERE ${where} GROUP BY type`,
       params
     );
-    const income = rows.find(r => r.type === 'income')?.total || 0;
     const expense = rows.find(r => r.type === 'expense')?.total || 0;
-    res.json({ code: 0, income: Number(income), expense: Number(expense), balance: Number(income) - Number(expense) });
+    const debtLend = rows.find(r => r.type === 'debt_lend')?.total || 0;
+    const debtFavor = rows.find(r => r.type === 'debt_favor')?.total || 0;
+    const debt = Number(debtLend) + Number(debtFavor);
+    res.json({
+      code: 0,
+      expense: Number(expense),
+      debt_lend: Number(debtLend),
+      debt_favor: Number(debtFavor),
+      debt
+    });
   } catch (e) {
     console.error(e);
     res.status(500).json({ code: 500, message: '统计失败' });

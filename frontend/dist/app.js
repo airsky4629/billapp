@@ -47,7 +47,7 @@
   let calendarYear = null;    // number
   let calendarDay = null;     // string YYYY-MM-DD
 
-  const DEFAULT_CATEGORIES = ['餐饮', '交通', '购物', '住房', '娱乐', '医疗', '其他'];
+  const DEFAULT_CATEGORIES = { expense: ['餐饮', '交通', '购物', '住房', '娱乐', '医疗', '其他'], debt_lend: ['亲友', '同事', '同学', '其他'], debt_favor: ['礼金', '红包', '礼物', '宴请', '其他'] };
 
   function normalizeCategory(v) {
     return String(v || '').replace(/\s+/g, ' ').trim().slice(0, 50);
@@ -88,7 +88,8 @@
     const t = recordForm && recordForm.querySelector ? recordForm.querySelector('[name="type"]') : null;
     const recordType = (t && t.value) ? t.value : '';
     const qs = new URLSearchParams();
-    if (recordType && (recordType === 'income' || recordType === 'expense')) qs.set('type', recordType);
+    const validTypes = ['expense', 'debt_lend', 'debt_favor'];
+    if (recordType && validTypes.includes(recordType)) qs.set('type', recordType);
     const url = '/api/categories' + (qs.toString() ? ('?' + qs.toString()) : '');
     return api(url)
       .then((d) => Array.isArray(d && d.list) ? d.list : [])
@@ -225,13 +226,13 @@
     for (var i = 0; i < 7; i++) {
       var d = new Date(calendarWeekStart.getFullYear(), calendarWeekStart.getMonth(), calendarWeekStart.getDate() + i);
       var key = toLocalDateStr(d);
-      byDay[key] = { income: 0, expense: 0, dateStr: key };
+      byDay[key] = { debt: 0, expense: 0, dateStr: key };
     }
     arr.forEach(function(r) {
       var key = formatDate(r.record_date || r.created_at);
       if (byDay[key]) {
-        if (r.type === 'income') byDay[key].income += Number(r.amount);
-        else byDay[key].expense += Number(r.amount);
+        if (r.type === 'expense') byDay[key].expense += Number(r.amount);
+        else byDay[key].debt += Number(r.amount);
       }
     });
     var weekNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
@@ -239,8 +240,8 @@
     for (var i = 0; i < 7; i++) {
       var d = new Date(calendarWeekStart.getFullYear(), calendarWeekStart.getMonth(), calendarWeekStart.getDate() + i);
       var key = toLocalDateStr(d);
-      var cell = byDay[key] || { income: 0, expense: 0, dateStr: key };
-      html += '<div class="cal-week-cell clickable" data-date="' + key + '"><span class="cal-d">' + (d.getMonth() + 1) + '/' + d.getDate() + '</span><span class="cal-w">' + weekNames[i] + '</span><span class="cal-inc">+' + (cell.income || 0).toFixed(0) + '</span><span class="cal-exp">-' + (cell.expense || 0).toFixed(0) + '</span></div>';
+      var cell = byDay[key] || { debt: 0, expense: 0, dateStr: key };
+      html += '<div class="cal-week-cell clickable" data-date="' + key + '"><span class="cal-d">' + (d.getMonth() + 1) + '/' + d.getDate() + '</span><span class="cal-w">' + weekNames[i] + '</span><span class="cal-debt">+' + (cell.debt || 0).toFixed(0) + '</span><span class="cal-exp">-' + (cell.expense || 0).toFixed(0) + '</span></div>';
     }
     html += '</div></div>';
     calendarWrap.innerHTML = html;
@@ -266,13 +267,13 @@
     var byDay = {};
     for (var d = 1; d <= last.getDate(); d++) {
       var key = y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-      byDay[key] = { income: 0, expense: 0 };
+      byDay[key] = { debt: 0, expense: 0 };
     }
     arr.forEach(function(r) {
       var key = formatDate(r.record_date || r.created_at);
       if (byDay[key]) {
-        if (r.type === 'income') byDay[key].income += Number(r.amount);
-        else byDay[key].expense += Number(r.amount);
+        if (r.type === 'expense') byDay[key].expense += Number(r.amount);
+        else byDay[key].debt += Number(r.amount);
       }
     });
     var startDow = first.getDay();
@@ -282,13 +283,13 @@
     for (var i = 0; i < startBlank; i++) cells.push('<div class="cal-day empty"></div>');
     for (var d = 1; d <= last.getDate(); d++) {
       var key = y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-      var cell = byDay[key] || { income: 0, expense: 0 };
-      var incText = cell.income ? ('+' + (cell.income || 0).toFixed(0)) : '';
+      var cell = byDay[key] || { debt: 0, expense: 0 };
+      var debtText = cell.debt ? ('+' + (cell.debt || 0).toFixed(0)) : '';
       var expText = cell.expense ? ('-' + (cell.expense || 0).toFixed(0)) : '';
       cells.push(
         '<div class="cal-day clickable" data-date="' + key + '">' +
           '<span class="cal-n">' + d + '</span>' +
-          '<span class="cal-inc">' + incText + '</span>' +
+          '<span class="cal-debt">' + debtText + '</span>' +
           '<span class="cal-exp">' + expText + '</span>' +
         '</div>'
       );
@@ -315,21 +316,21 @@
     if (!calendarWrap) return;
     var arr = Array.isArray(list) ? list : [];
     var byMonth = {};
-    for (var mo = 1; mo <= 12; mo++) byMonth[mo] = { income: 0, expense: 0 };
+    for (var mo = 1; mo <= 12; mo++) byMonth[mo] = { debt: 0, expense: 0 };
     arr.forEach(function(r) {
       var key = formatDate(r.record_date || r.created_at);
       var mo = parseInt(key.slice(5, 7), 10);
       if (byMonth[mo]) {
-        if (r.type === 'income') byMonth[mo].income += Number(r.amount);
-        else byMonth[mo].expense += Number(r.amount);
+        if (r.type === 'expense') byMonth[mo].expense += Number(r.amount);
+        else byMonth[mo].debt += Number(r.amount);
       }
     });
     var html = '<div class="cal-year">';
     for (var mo = 1; mo <= 12; mo++) {
       var g = byMonth[mo];
-      var incTxt = g.income ? ('+' + (g.income || 0).toFixed(0)) : '';
+      var debtTxt = g.debt ? ('+' + (g.debt || 0).toFixed(0)) : '';
       var expTxt = g.expense ? ('-' + (g.expense || 0).toFixed(0)) : '';
-      html += '<div class="cal-year-card clickable" data-month="' + mo + '"><div class="cal-year-title">' + mo + '月</div><div class="cal-year-row"><span class="amount income">' + incTxt + '</span><span class="amount expense">' + expTxt + '</span></div></div>';
+      html += '<div class="cal-year-card clickable" data-month="' + mo + '"><div class="cal-year-title">' + mo + '月</div><div class="cal-year-row"><span class="amount debt">' + debtTxt + '</span><span class="amount expense">' + expTxt + '</span></div></div>';
     }
     html += '</div>';
     calendarWrap.innerHTML = html;
@@ -352,22 +353,24 @@
       var key = formatDate(r.record_date || r.created_at);
       return key === calendarDay;
     });
-    var income = 0, expense = 0;
+    var debt = 0, expense = 0;
     dayRecords.forEach(function(r) {
-      if (r.type === 'income') income += Number(r.amount);
-      else expense += Number(r.amount);
+      if (r.type === 'expense') expense += Number(r.amount);
+      else debt += Number(r.amount);
     });
-    var balance = income - expense;
+    var debtLend = dayRecords.filter(function(r) { return r.type === 'debt_lend'; }).reduce(function(s, r) { return s + Number(r.amount); }, 0);
+    var debtFavor = dayRecords.filter(function(r) { return r.type === 'debt_favor'; }).reduce(function(s, r) { return s + Number(r.amount); }, 0);
     var html = '<div class="cal-day-view">';
-    html += '<div class="cal-day-summary"><div class="cal-day-item"><span class="label">收入</span><span class="amount income">' + income.toFixed(2) + '</span></div>';
-    html += '<div class="cal-day-item"><span class="label">支出</span><span class="amount expense">' + expense.toFixed(2) + '</span></div>';
-    html += '<div class="cal-day-item"><span class="label">结余</span><span class="amount balance">' + balance.toFixed(2) + '</span></div></div>';
+    html += '<div class="cal-day-summary"><div class="cal-day-item"><span class="label">支出</span><span class="amount expense">' + expense.toFixed(2) + '</span></div>';
+    html += '<div class="cal-day-item"><span class="label">借出</span><span class="amount debt-lend">' + debtLend.toFixed(2) + '</span></div>';
+    html += '<div class="cal-day-item"><span class="label">人情往来</span><span class="amount debt-favor">' + debtFavor.toFixed(2) + '</span></div></div>';
     if (dayRecords.length === 0) {
       html += '<p class="empty">该日暂无记录</p>';
     } else {
       html += '<ul class="cal-day-list">';
       dayRecords.forEach(function(r) {
-        html += '<li class="cal-day-record"><span class="type ' + r.type + '">' + (r.type === 'income' ? '收入' : '支出') + '</span><span class="category">' + escapeHtml(r.category || '') + '</span><span class="amount ' + r.type + '">' + (r.type === 'income' ? '+' : '-') + Number(r.amount).toFixed(2) + '</span></li>';
+        var typeLabel = r.type === 'expense' ? '支出' : (r.type === 'debt_lend' ? '借出' : '人情往来');
+        html += '<li class="cal-day-record"><span class="type ' + r.type + '">' + typeLabel + '</span><span class="category">' + escapeHtml(r.category || '') + '</span><span class="amount ' + r.type + '">' + (r.type === 'expense' ? '-' : '+') + Number(r.amount).toFixed(2) + '</span></li>';
       });
       html += '</ul>';
     }
@@ -395,8 +398,9 @@
     arr.forEach((r) => {
       const li = document.createElement('li');
       const dateStr = formatDate(r.record_date || r.created_at);
-      const typeText = r.type === 'income' ? '收入' : '支出';
-      const amountText = (r.type === 'income' ? '+' : '-') + Number(r.amount).toFixed(2);
+      const typeLabels = { expense: '支出', debt_lend: '借出', debt_favor: '人情往来' };
+      const typeText = typeLabels[r.type] || r.type;
+      const amountText = (r.type === 'expense' ? '-' : '+') + Number(r.amount).toFixed(2);
       const noteText = escapeHtml(r.note || '');
       li.innerHTML = `
         <span class="rec-date">${dateStr}</span>
@@ -421,9 +425,9 @@
       let url = '/api/summary';
       api(url)
         .then((d) => {
-          $('sum-income').textContent = (d.income || 0).toFixed(2);
           $('sum-expense').textContent = (d.expense || 0).toFixed(2);
-          $('sum-balance').textContent = (d.balance || 0).toFixed(2);
+          $('sum-debt-lend').textContent = (d.debt_lend || 0).toFixed(2);
+          $('sum-debt-favor').textContent = (d.debt_favor || 0).toFixed(2);
         })
         .catch(() => {});
       return;
@@ -434,9 +438,9 @@
     if (start || end) url += '?' + new URLSearchParams({ startDate: start || '', endDate: end || '' }).toString();
     api(url)
       .then((d) => {
-        $('sum-income').textContent = (d.income || 0).toFixed(2);
         $('sum-expense').textContent = (d.expense || 0).toFixed(2);
-        $('sum-balance').textContent = (d.balance || 0).toFixed(2);
+        $('sum-debt-lend').textContent = (d.debt_lend || 0).toFixed(2);
+        $('sum-debt-favor').textContent = (d.debt_favor || 0).toFixed(2);
       })
       .catch(() => {});
   }
@@ -480,9 +484,18 @@
       .catch((e) => alert(e.message || '删除失败'));
   }
 
+  function openDebtTypePicker() {
+    var debtTypePicker = $('debt-type-picker-modal');
+    if (debtTypePicker) debtTypePicker.classList.remove('hidden');
+  }
+  function closeDebtTypePicker() {
+    var debtTypePicker = $('debt-type-picker-modal');
+    if (debtTypePicker) debtTypePicker.classList.add('hidden');
+  }
   function openModal(type) {
     recordForm.querySelector('[name="type"]').value = type;
-    modalTitle.textContent = type === 'income' ? '记收入' : '记支出';
+    var titles = { expense: '记支出', debt_lend: '记借出', debt_favor: '记人情往来' };
+    modalTitle.textContent = titles[type] || '记一笔';
     recordForm.querySelector('[name="amount"]').value = '';
     recordForm.querySelector('[name="category"]').value = '';
     recordForm.querySelector('[name="note"]').value = '';
@@ -659,8 +672,9 @@
     categoryPickerModal.classList.remove('hidden');
 
     // 每次打开时，从 DB distinct 拉取并合并默认分类
+    const recordType = (recordForm && recordForm.querySelector('[name="type"]')) ? recordForm.querySelector('[name="type"]').value : 'expense';
+    const defaults = (DEFAULT_CATEGORIES[recordType] || DEFAULT_CATEGORIES.expense).slice();
     loadDistinctCategoriesForCurrentRecord().then((dbList) => {
-      const defaults = DEFAULT_CATEGORIES.slice();
       const fromDb = (dbList || []).map(normalizeCategory).filter(Boolean);
       const merged = uniq(defaults.concat(fromDb));
       // 保持默认分类在前，剩余按字母序
@@ -694,7 +708,7 @@
     const filterTypeLabel = $('filter-type-label');
     if (filterTypeLabel && filterTypeInput) {
       const value = filterTypeInput.value || '';
-      const labels = { '': '全部', 'income': '收入', 'expense': '支出' };
+      const labels = { '': '全部', 'expense': '支出', 'debt_lend': '借出', 'debt_favor': '人情往来' };
       filterTypeLabel.textContent = labels[value] || '全部';
     }
     setView('list');
@@ -831,8 +845,8 @@
       loadRecords();
     } catch (e) { console.error(e); }
   });
-  $('add-income').addEventListener('click', () => openModal('income'));
   $('add-expense').addEventListener('click', () => openModal('expense'));
+  $('add-debt').addEventListener('click', openDebtTypePicker);
   $('filter-btn').addEventListener('click', loadRecords);
   
   // 记账日期滚轮弹窗
@@ -867,6 +881,20 @@
   }
   if (pickerCancel) {
     pickerCancel.addEventListener('click', closeTypePicker);
+  }
+  var debtTypePickerModal = $('debt-type-picker-modal');
+  if (debtTypePickerModal) {
+    var debtTypeCancel = $('debt-type-picker-cancel');
+    if (debtTypeCancel) debtTypeCancel.addEventListener('click', closeDebtTypePicker);
+    var debtBackdrop = debtTypePickerModal.querySelector('.picker-modal-backdrop');
+    if (debtBackdrop) debtBackdrop.addEventListener('click', closeDebtTypePicker);
+    debtTypePickerModal.querySelectorAll('.debt-type').forEach(function(opt) {
+      opt.addEventListener('click', function() {
+        var v = opt.getAttribute('data-value');
+        closeDebtTypePicker();
+        if (v) openModal(v);
+      });
+    });
   }
   if (typePickerModal) {
     const backdrop = typePickerModal.querySelector('.picker-modal-backdrop');

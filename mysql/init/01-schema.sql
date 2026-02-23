@@ -9,11 +9,11 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 记账记录表（收入/支出）
+-- 记账记录表（支出/外债：借出、人情往来）
 CREATE TABLE IF NOT EXISTS records (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
-  type ENUM('income', 'expense') NOT NULL,
+  type ENUM('expense', 'debt_lend', 'debt_favor') NOT NULL,
   amount DECIMAL(12,2) NOT NULL,
   category VARCHAR(50) NOT NULL,
   note VARCHAR(255) DEFAULT '',

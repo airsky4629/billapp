@@ -67,7 +67,7 @@
 
 - `id`：主键
 - `user_id`：外键 → users.id，实现多用户隔离
-- `type`：`income` | `expense`
+- `type`：`expense`（支出）| `debt_lend`（借出）| `debt_favor`（人情往来）
 - `amount`：金额（DECIMAL）
 - `category`：分类（如餐饮、交通）
 - `note`：备注
@@ -89,14 +89,14 @@
 | POST | /api/records | 新增记账 | 是 |
 | GET  | /api/records | 列表（分页、日期、类型筛选） | 是 |
 | DELETE | /api/records/:id | 删除记录 | 是 |
-| GET  | /api/summary | 收入/支出/结余统计 | 是 |
+| GET  | /api/summary | 支出/借出/人情往来统计 | 是 |
 
-列表与统计支持 `startDate`、`endDate`、`type`(income/expense) 等查询参数。
+列表与统计支持 `startDate`、`endDate`、`type`(expense/debt_lend/debt_favor) 等查询参数。
 
 ## 6. 前端功能
 
 - **登录/注册**：Tab 切换，表单提交后保存 token 与用户名到 localStorage，并跳转主页。
-- **首页**：展示当前用户在本月（或筛选区间）的收入、支出、结余；列表展示记录，支持按日期范围与类型筛选；可新增收入/支出、删除记录。
+- **首页**：展示当前用户在本月（或筛选区间）的支出、借出、人情往来；列表展示记录，支持按日期范围与类型筛选；可新增支出/外债（借出、人情往来两种子类型）、删除记录。
 - **会话**：刷新页面时通过 `/api/me` 校验 token，无效则退回登录页；退出清除本地 token 并回到登录页。
 
 ## 7. Docker 与编排

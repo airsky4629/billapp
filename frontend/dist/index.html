@@ -50,17 +50,17 @@
         <input type="hidden" id="filter-type" value="" />
       </section>
       <section class="summary">
-        <div class="summary-item income">
-          <span class="label">收入</span>
-          <span id="sum-income" class="amount">0.00</span>
-        </div>
         <div class="summary-item expense">
           <span class="label">支出</span>
           <span id="sum-expense" class="amount">0.00</span>
         </div>
-        <div class="summary-item balance">
-          <span class="label">结余</span>
-          <span id="sum-balance" class="amount">0.00</span>
+        <div class="summary-item debt-lend">
+          <span class="label">借出</span>
+          <span id="sum-debt-lend" class="amount">0.00</span>
+        </div>
+        <div class="summary-item debt-favor">
+          <span class="label">人情往来</span>
+          <span id="sum-debt-favor" class="amount">0.00</span>
         </div>
       </section>
       <section id="calendar-wrap" class="calendar-wrap hidden"></section>
@@ -73,11 +73,11 @@
           <button type="button" id="filter-btn" class="btn small hidden">查询</button>
         </div>
         <div class="record-buttons">
-          <button type="button" id="add-income" class="btn add income">+ 记收入</button>
+          <button type="button" id="add-expense" class="btn add expense">+ 记支出</button>
           <button type="button" id="filter-type-btn" class="btn filter-type-btn">
             <span id="filter-type-label">全部</span>
           </button>
-          <button type="button" id="add-expense" class="btn add expense">+ 记支出</button>
+          <button type="button" id="add-debt" class="btn add debt">+ 记外债</button>
         </div>
       </section>
       <section class="view-tabs">
@@ -144,10 +144,23 @@
       <h3 class="picker-title">选择类型</h3>
       <div class="picker-options">
         <button type="button" class="picker-option" data-value="">全部</button>
-        <button type="button" class="picker-option" data-value="income">收入</button>
         <button type="button" class="picker-option" data-value="expense">支出</button>
+        <button type="button" class="picker-option" data-value="debt_lend">借出</button>
+        <button type="button" class="picker-option" data-value="debt_favor">人情往来</button>
       </div>
       <button type="button" id="picker-cancel" class="btn picker-cancel">取消</button>
+    </div>
+  </div>
+
+  <div id="debt-type-picker-modal" class="picker-modal hidden">
+    <div class="picker-modal-backdrop"></div>
+    <div class="picker-modal-content">
+      <h3 class="picker-title">选择外债类型</h3>
+      <div class="picker-options">
+        <button type="button" class="picker-option debt-type" data-value="debt_lend">借出</button>
+        <button type="button" class="picker-option debt-type" data-value="debt_favor">人情往来</button>
+      </div>
+      <button type="button" id="debt-type-picker-cancel" class="btn picker-cancel">取消</button>
     </div>
   </div>
 
