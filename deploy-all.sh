@@ -27,6 +27,26 @@ if ! command -v git &>/dev/null; then
   exit 1
 fi
 
+###########################################################
+# 选择镜像架构（与 start.sh / build-images.sh 保持一致）
+###########################################################
+
+echo ">>> 选择要构建并部署的镜像架构类型："
+echo "  1) 使用本机默认架构（推荐，通常是 arm64/x86_64）"
+echo "  2) 强制使用 x86 架构镜像 (linux/amd64)"
+read -p "请输入选项 [1/2]，直接回车默认为 1: " ARCH_CHOICE
+
+COMPOSE_FILES=(-f docker-compose.yml)
+case "${ARCH_CHOICE:-1}" in
+  2)
+    COMPOSE_FILES+=(-f docker-compose.amd64.yml)
+    echo ">>> 已选择：强制使用 x86 (linux/amd64) 镜像进行构建与推送"
+    ;;
+  *)
+    echo ">>> 已选择：使用本机默认架构进行构建与推送"
+    ;;
+esac
+
 if ! command -v docker &>/dev/null; then
   echo "错误: 未找到 docker，请先安装 Docker。"
   exit 1
@@ -74,7 +94,7 @@ echo ""
 ###########################################################
 
 echo ">>> [1/3] 构建 Docker 镜像 (根据 docker-compose.yml)..."
-$COMPOSE_CMD build
+$COMPOSE_CMD "${COMPOSE_FILES[@]}" build
 
 echo ""
 echo ">>> 构建完成，本地 billapp 相关镜像："
