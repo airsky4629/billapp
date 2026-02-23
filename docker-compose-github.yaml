@@ -1,0 +1,57 @@
+# 使用 GitHub Container Registry 预构建镜像，无需本地 build
+# 启动前会自动执行: docker pull ghcr.io/airsky4629/billapp-backend:latest
+#                   docker pull ghcr.io/airsky4629/billapp-frontend:latest
+
+name: billapp
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: billapp-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: account_db
+      MYSQL_USER: account_user
+      MYSQL_PASSWORD: account_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - billapp_mysql_data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpass"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    image: ghcr.io/airsky4629/billapp-backend:latest
+    container_name: billapp-backend
+    restart: unless-stopped
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: account_user
+      DB_PASSWORD: account_pass
+      DB_NAME: account_db
+      JWT_SECRET: your-jwt-secret-change-in-production
+      JWT_REFRESH_SECRET: your-jwt-refresh-secret-change-in-production
+      CORS_ORIGIN: "*"
+    ports:
+      - "3000:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  frontend:
+    image: ghcr.io/airsky4629/billapp-frontend:latest
+    container_name: billapp-frontend
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  billapp_mysql_data:
