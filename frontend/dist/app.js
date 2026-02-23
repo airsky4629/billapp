@@ -1,6 +1,7 @@
 (function () {
   const API_BASE = ''; // 同源，由 nginx 代理 /api 到 backend
   let token = localStorage.getItem('token');
+  let refreshToken = localStorage.getItem('refreshToken');
   let currentUsername = localStorage.getItem('username') || '';
 
   const $ = (id) => document.getElementById(id);
@@ -105,20 +106,64 @@
     authMsg.textContent = text || '';
   }
 
-  function api(url, options = {}) {
+  // Token 刷新函数
+  async function refreshAccessToken() {
+    if (!refreshToken) {
+      throw new Error('未登录');
+    }
+    try {
+      const res = await fetch((API_BASE || '') + '/api/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken })
+      });
+      const data = await res.json();
+      if (res.ok && data.code === 0) {
+        token = data.token;
+        localStorage.setItem('token', token);
+        return token;
+      } else {
+        throw new Error(data.message || '刷新 token 失败');
+      }
+    } catch (e) {
+      // 刷新失败，清除所有 token
+      token = '';
+      refreshToken = '';
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('username');
+      throw e;
+    }
+  }
+
+  // API 请求函数（支持自动刷新 token）
+  async function api(url, options = {}) {
     const headers = { 'Content-Type': 'application/json', ...options.headers };
     if (token) headers['Authorization'] = 'Bearer ' + token;
-    return fetch((API_BASE || '') + url, { ...options, headers }).then((res) => {
-      const contentType = res.headers.get('content-type');
-      const isJson = contentType && contentType.includes('application/json');
-      const body = isJson ? res.json() : res.text();
-      return body.then((data) => {
-        if (res.ok) return data;
-        const err = new Error(data.message || data || '请求失败');
-        err.code = data.code;
-        err.data = data;
-        throw err;
-      });
+    
+    let res = await fetch((API_BASE || '') + url, { ...options, headers });
+    
+    // 如果 token 过期（401），尝试刷新
+    if (res.status === 401 && refreshToken && url !== '/api/refresh' && url !== '/api/login' && url !== '/api/register') {
+      try {
+        await refreshAccessToken();
+        // 使用新 token 重试请求
+        headers['Authorization'] = 'Bearer ' + token;
+        res = await fetch((API_BASE || '') + url, { ...options, headers });
+      } catch (e) {
+        // 刷新失败，返回原始错误
+      }
+    }
+    
+    const contentType = res.headers.get('content-type');
+    const isJson = contentType && contentType.includes('application/json');
+    const body = isJson ? res.json() : res.text();
+    return body.then((data) => {
+      if (res.ok) return data;
+      const err = new Error(data.message || data || '请求失败');
+      err.code = data.code;
+      err.data = data;
+      throw err;
     });
   }
 
@@ -723,14 +768,23 @@
     api('/api/login', { method: 'POST', body: JSON.stringify({ username, password }) })
       .then((d) => {
         token = d.token;
+        refreshToken = d.refreshToken;
         currentUsername = d.username;
         localStorage.setItem('token', token);
+        localStorage.setItem('refreshToken', refreshToken);
         localStorage.setItem('username', currentUsername);
         setAuthMessage('');
         showPage(true);
         initMainPage();
       })
-      .catch((e) => setAuthMessage(e.message || '登录失败'));
+      .catch((e) => {
+        const message = e.message || '登录失败';
+        setAuthMessage(message);
+        // 如果是账户锁定错误，显示更详细的提示
+        if (e.code === 423) {
+          setAuthMessage(message);
+        }
+      });
   });
 
   // 注册
@@ -742,8 +796,10 @@
     api('/api/register', { method: 'POST', body: JSON.stringify({ username, password }) })
       .then((d) => {
         token = d.token;
+        refreshToken = d.refreshToken;
         currentUsername = d.username;
         localStorage.setItem('token', token);
+        localStorage.setItem('refreshToken', refreshToken);
         localStorage.setItem('username', currentUsername);
         setAuthMessage('');
         showPage(true);
@@ -753,9 +809,17 @@
   });
 
   $('logout-btn').addEventListener('click', () => {
+    // 调用退出接口，使 token 失效
+    if (token) {
+      api('/api/logout', { method: 'POST' }).catch(() => {
+        // 即使退出接口失败，也清除本地 token
+      });
+    }
     token = '';
+    refreshToken = '';
     currentUsername = '';
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('username');
     showPage(false);
     setAuthMessage('');
@@ -981,7 +1045,14 @@
   if (token) {
     api('/api/me')
       .then(() => { showPage(true); initMainPage(); })
-      .catch(() => { token = ''; localStorage.removeItem('token'); showPage(false); });
+      .catch(() => {
+        token = '';
+        refreshToken = '';
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('username');
+        showPage(false);
+      });
   } else {
     showPage(false);
   }

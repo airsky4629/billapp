@@ -33,6 +33,8 @@ services:
       DB_PASSWORD: account_pass
       DB_NAME: account_db
       JWT_SECRET: your-jwt-secret-change-in-production
+      JWT_REFRESH_SECRET: your-jwt-refresh-secret-change-in-production
+      CORS_ORIGIN: "*"
     ports:
       - "3000:3000"
     depends_on:

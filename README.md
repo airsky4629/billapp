@@ -10,6 +10,8 @@
 ├── start.sh             # 一键启动脚本
 ├── stop.sh              # 一键关闭所有容器
 ├── DESIGN.md            # 设计说明
+├── AUTH_DESIGN.md       # 登录态与认证设计
+├── PERMISSION_DESIGN.md # 权限设计
 ├── README.md            # 本文件：使用方式与测试访问
 ├── mysql/
 │   └── init/
@@ -136,4 +138,8 @@ curl -s http://localhost:3000/api/me -H "Authorization: Bearer YOUR_TOKEN"
 
 ## 设计说明
 
-更详细的架构、多用户与安全、数据库表结构、API 设计、Docker 编排等见工程根目录下的 **DESIGN.md**。
+更详细的说明见工程根目录下文档：
+
+- **DESIGN.md**：架构、多用户与安全、数据库表结构、API 设计、Docker 编排
+- **AUTH_DESIGN.md**：登录态与认证设计（Token、安全加固）
+- **PERMISSION_DESIGN.md**：权限设计（接口权限与数据隔离）

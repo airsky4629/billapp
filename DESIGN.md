@@ -42,9 +42,9 @@
 ## 3. 多用户与安全
 
 - **用户体系**：每个用户独立注册、登录，数据按 `user_id` 隔离。
-- **认证方式**：登录/注册成功后下发 JWT，前端在请求头 `Authorization: Bearer <token>` 中携带。
+- **认证方式**：登录/注册成功后下发 JWT，前端在请求头 `Authorization: Bearer <token>` 中携带。详见 [AUTH_DESIGN.md](./AUTH_DESIGN.md)。
 - **密码**：使用 bcrypt 哈希存储，不明文保存。
-- **接口权限**：除 `/api/register`、`/api/login`、`/api/health` 外，其余接口均需有效 JWT，且仅能操作当前用户数据。
+- **接口与数据权限**：除 `/api/register`、`/api/login`、`/api/health`、`/api/refresh` 外，其余接口均需有效 JWT，且仅能操作当前用户数据。完整权限设计见 [PERMISSION_DESIGN.md](./PERMISSION_DESIGN.md)。
 
 ## 4. 数据库设计
 
@@ -113,5 +113,11 @@
 
 - 数据库账号、JWT 密钥等通过 Compose 的 `environment` 传入，生产环境建议使用 `.env` 或密钥管理，并修改默认密码与 `JWT_SECRET`。
 - 需对外暴露的端口：前端 8080、后端 3000、MySQL 3306（可按需去掉端口映射或改端口）。
+
+## 9. 相关文档
+
+- **[AUTH_DESIGN.md](./AUTH_DESIGN.md)**：登录态与认证设计（Token、安全加固等）
+- **[PERMISSION_DESIGN.md](./PERMISSION_DESIGN.md)**：权限设计（接口权限与数据隔离）
+- **[SECURITY_IMPROVEMENTS.md](./SECURITY_IMPROVEMENTS.md)**：安全改进说明
 
 以上即为本项目的整体设计说明，便于维护与二次开发。
