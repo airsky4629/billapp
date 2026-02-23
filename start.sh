@@ -4,6 +4,24 @@
 set -e
 cd "$(dirname "$0")"
 
+# 选择构建/启动时使用的镜像架构
+echo ">>> 选择要构建并启动的镜像架构类型："
+echo "  1) 使用本机默认架构（推荐，通常是 arm64/x86_64）"
+echo "  2) 强制使用 x86 架构镜像 (linux/amd64)"
+read -p "请输入选项 [1/2]，直接回车默认为 1: " ARCH_CHOICE
+
+# compose 文件选择：默认用 docker-compose.yml；选 2 时叠加 amd64 覆盖文件
+COMPOSE_FILES=(-f docker-compose.yml)
+case "${ARCH_CHOICE:-1}" in
+  2)
+    COMPOSE_FILES+=(-f docker-compose.amd64.yml)
+    echo ">>> 已选择：强制使用 x86 (linux/amd64) 镜像进行构建与启动"
+    ;;
+  *)
+    echo ">>> 已选择：使用本机默认架构进行构建与启动"
+    ;;
+esac
+
 # 统一 compose 命令
 COMPOSE_CMD=""
 if docker compose version &>/dev/null; then
@@ -23,10 +41,10 @@ if [ -z "$COMPOSE_CMD" ]; then
 fi
 
 # 检测是否有本项目的容器已在运行
-RUNNING=$($COMPOSE_CMD ps -q 2>/dev/null | head -1)
+RUNNING=$($COMPOSE_CMD "${COMPOSE_FILES[@]}" ps -q 2>/dev/null | head -1)
 if [ -n "$RUNNING" ]; then
   echo ">>> 检测到当前项目已有容器在运行："
-  $COMPOSE_CMD ps
+  $COMPOSE_CMD "${COMPOSE_FILES[@]}" ps
   echo ""
   read -p "是否先关闭当前进程再启动？(y/N): " ANSWER
   case "${ANSWER:-n}" in
@@ -35,12 +53,12 @@ if [ -n "$RUNNING" ]; then
       case "${RESTART_MYSQL:-n}" in
         y|Y|yes|YES)
           echo ">>> 正在关闭所有服务（含 MySQL）..."
-          $COMPOSE_CMD down
+          $COMPOSE_CMD "${COMPOSE_FILES[@]}" down
           echo ">>> 已关闭，开始重新构建并启动..."
           ;;
         *)
           echo ">>> 正在仅关闭后端与前端（保留 MySQL）..."
-          $COMPOSE_CMD stop backend frontend 2>/dev/null || true
+          $COMPOSE_CMD "${COMPOSE_FILES[@]}" stop backend frontend 2>/dev/null || true
           echo ">>> 已关闭应用服务，开始重新构建并启动..."
           ;;
       esac
@@ -53,7 +71,7 @@ if [ -n "$RUNNING" ]; then
 fi
 
 echo ">>> 构建并启动所有服务..."
-$COMPOSE_CMD up -d --build
+$COMPOSE_CMD "${COMPOSE_FILES[@]}" up -d --build
 
 echo ""
 echo ">>> 等待 MySQL 就绪..."
